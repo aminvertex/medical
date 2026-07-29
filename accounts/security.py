@@ -17,6 +17,7 @@ class RoleSessionAuth(SessionAuth):
 
     def __init__(self, *roles: str):
         self.roles = set(roles)
+        self.csrf = True  # Add csrf attribute for Django Ninja compatibility
 
     def authenticate(self, request):
         user = super().authenticate(request)
