@@ -2,7 +2,7 @@
 {% block content %}
 <section class="dashboard-shell">
   <aside class="dashboard-sidebar">
-    <div><span class="eyebrow">پنل مدیریت</span><h2>MAHDAI Admin</h2></div>
+    <div><span class="eyebrow">پنل مدیریت</span><h2>مدیریت نرسیمد</h2></div>
     <nav><a href="{% url 'dashboard_home' %}">نمای کلی</a><a href="{% url 'dashboard_users' %}">کاربران و نقش‌ها</a><a href="{% url 'dashboard_courses' %}">دوره‌ها</a><a href="{% url 'dashboard_orders' %}">سفارش‌ها و فروش</a><a href="{% url 'dashboard_messages' %}">پیام‌های تماس</a><a href="/django-admin/">Django Admin</a><a href="/api/docs">Swagger API</a></nav>
   </aside>
   <div class="dashboard-main">{% block dashboard_content %}{% endblock %}</div>

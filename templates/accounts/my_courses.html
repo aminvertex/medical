@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}دوره‌های من | MAHDAI{% endblock %}
+{% block title %}دوره‌های من | نرسیمد آکادمی{% endblock %}
 {% block content %}
 <section class="page-hero compact"><div class="container"><span class="eyebrow">مسیر یادگیری</span><h1>دوره‌های من</h1><p>این فهرست از Join بین دانشجو، Enrollment، OrderItem و Course ساخته می‌شود.</p></div></section>
 <section class="section"><div class="container"><div class="learning-grid">{% for enrollment in enrollments %}<article class="learning-card"><img src="{{ enrollment.course.image_url }}" alt="{{ enrollment.course.title }}"><div><span class="badge">{{ enrollment.course.get_level_display }}</span><h3>{{ enrollment.course.title }}</h3><p>ثبت‌نام: {{ enrollment.enrolled_at|date:'Y/m/d' }}</p><div class="progress"><i style="width: {{ enrollment.progress_percent }}%"></i></div><small>{{ enrollment.progress_percent }}٪ پیشرفت</small><a class="btn btn-outline btn-block" href="{{ enrollment.course.get_absolute_url }}">مشاهده دوره</a></div></article>{% empty %}<div class="empty-state"><h3>هنوز دوره‌ای نخریده‌اید</h3><p>پس از پرداخت موفق، دسترسی دوره به‌طور خودکار اینجا نمایش داده می‌شود.</p><a class="btn btn-primary" href="{% url 'shop' %}">مشاهده دوره‌ها</a></div>{% endfor %}</div></div></section>

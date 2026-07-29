@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}علاقه‌مندی‌های من | MAHDAI{% endblock %}
+{% block title %}علاقه‌مندی‌های من | نرسیمد آکادمی{% endblock %}
 {% block content %}
 <section class="page-hero compact"><div class="container"><span class="eyebrow">فهرست شخصی</span><h1>علاقه‌مندی‌های من</h1></div></section>
 <section class="section"><div class="container"><div class="course-grid">{% for favorite in favorites %}{% include 'includes/course_card.html' with course=favorite.course force_favorite=True favorite_ids=''  %}{% empty %}<div class="empty-state"><h3>فهرست خالی است</h3><a class="btn btn-primary" href="{% url 'shop' %}">انتخاب دوره</a></div>{% endfor %}</div></div></section>

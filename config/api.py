@@ -1,10 +1,10 @@
 from ninja import NinjaAPI
 
 api = NinjaAPI(
-    title="MAHDAI Academy API",
+    title="NersiMed Academy API",
     version="1.0.0",
-    description="API فروشگاه دوره‌های هوش مصنوعی؛ احراز هویت Session، سبد، سفارش، پرداخت آزمایشی و مدیریت.",
-    urls_namespace="mahdai_api",
+    description="API پلتفرم آموزش پزشکی؛ احراز هویت Session، سبد، سفارش، پرداخت آزمایشی و مدیریت.",
+    urls_namespace="nersimed_api",
 )
 
 api.add_router("/v1/auth", "accounts.api.router")

@@ -1,6 +1,6 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load catalog_tags %}
-{% block title %}داشبورد مدیریت | MAHDAI{% endblock %}
+{% block title %}داشبورد مدیریت | نرسیمد آکادمی{% endblock %}
 {% block dashboard_content %}
 <div class="dashboard-heading"><div><span class="eyebrow">گزارش مدیریتی</span><h1>نمای کلی فروشگاه</h1></div><a class="btn btn-outline" href="/django-admin/catalog/course/add/">افزودن دوره</a></div>
 <div class="metric-grid"><article><span>کل کاربران</span><strong>{{ users_count }}</strong><small>Student + Instructor + Admin</small></article><article><span>دوره‌های فعال</span><strong>{{ courses_count }}</strong><small>قابل نمایش در فروشگاه</small></article><article><span>سفارش‌های پرداخت‌شده</span><strong>{{ orders_count }}</strong><small>فروش موفق</small></article><article><span>درآمد کل</span><strong>{{ revenue|toman }}</strong><small>جمع Order.total_amount</small></article><article><span>نظرات در انتظار</span><strong>{{ pending_reviews }}</strong><small>نیازمند تأیید</small></article><article><span>پیام‌های جدید</span><strong>{{ new_messages }}</strong><small>پشتیبانی</small></article></div>
