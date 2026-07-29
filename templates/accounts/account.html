@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load catalog_tags %}
+{% block title %}حساب من | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><span class="eyebrow">پنل کاربری</span><h1>سلام {{ request.user.full_name }}</h1><p>وضعیت خریدها و مسیر یادگیری خود را مدیریت کنید.</p></div></section>
+<section class="section"><div class="container account-layout">
+  <aside class="account-nav"><a class="active" href="{% url 'account_overview' %}">نمای کلی</a><a href="{% url 'my_courses' %}">دوره‌های من</a><a href="{% url 'my_orders' %}">سفارش‌های من</a><a href="{% url 'my_favorites' %}">علاقه‌مندی‌ها</a>{% if request.user.role == 'INSTRUCTOR' %}<a href="{% url 'instructor_dashboard' %}">پنل مدرس</a>{% endif %}{% if request.user.is_admin_role %}<a href="{% url 'dashboard_home' %}">مدیریت فروشگاه</a>{% endif %}</aside>
+  <div class="account-content">
+    <div class="metric-grid three"><article><span>سفارش‌ها</span><strong>{{ orders_count }}</strong></article><article><span>دوره‌های فعال</span><strong>{{ courses_count }}</strong></article><article><span>علاقه‌مندی‌ها</span><strong>{{ favorites_count }}</strong></article></div>
+    <div class="content-card"><div class="section-heading"><div><h2>آخرین سفارش‌ها</h2></div><a class="text-link" href="{% url 'my_orders' %}">همه سفارش‌ها</a></div>
+      <div class="table-wrap"><table><thead><tr><th>شماره</th><th>وضعیت</th><th>مبلغ</th><th>تاریخ</th></tr></thead><tbody>{% for order in recent_orders %}<tr><td>{{ order.number }}</td><td><span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td><td>{{ order.total_amount|toman }}</td><td>{{ order.created_at|date:'Y/m/d' }}</td></tr>{% empty %}<tr><td colspan="4">هنوز سفارشی ثبت نکرده‌اید.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </div>
+</div></section>
+{% endblock %}

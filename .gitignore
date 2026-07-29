@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+media/courses/*
+!media/courses/.gitkeep
+staticfiles/
+.pytest_cache/
+.coverage
+.DS_Store

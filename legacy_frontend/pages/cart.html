@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سبد خرید - AI Academy</title>
+  <link rel="stylesheet" href="../css/cart.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="/JS/header.js"></script>
+
+</head>
+<body class="light">
+<!-- 🌟 Header -->
+<header class="ai-header">
+  <div class="container">
+    <div class="logo">
+      <img src="/asset/logonomy-1763455510995.png" alt="لوگو">
+      <span>MAHDAI</span>
+    </div>
+
+    <!-- دکمه همبرگری (فقط در موبایل نمایش داده می‌شود) -->
+    <button class="hamburger" aria-label="منوی ناوبری">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- منوی اصلی -->
+    <nav class="nav" id="mainNav">
+      <a href="./index.html">خانه</a>
+      <a href="./shop.html">فروشگاه</a>
+      <a href="./contact-us.html">تماس با ما</a>
+      <a href="./team.html">اعضای تیم ما</a>
+      <a href="./about-us.html">درباره ما</a>
+    </nav>
+
+    <div class="badge-wrapper">
+       <a href="/pages/checkout.HTML">
+      <span class="material-symbols-outlined img-icon">shopping_bag</span></a>
+      <span id="cart-badge" class="badge-large">0</span>
+      <button class="btn-primary">      <a href="/pages/auth.html">ورود / ثبت‌نام</a>
+</button>
+    </div>
+  </div>
+
+  <!-- Overlay منو برای موبایل -->
+  <div class="mobile-menu-overlay" id="mobileMenu">
+    <button class="close-btn" aria-label="بستن منو">&times;</button>
+    <a href="./index.html">خانه</a>
+    <a href="./shop.html">فروشگاه</a>
+    <a href="./contact-us.html">تماس با ما</a>
+    <a href="./team.html">اعضای تیم ما</a>
+    <a href="./about-us.html">درباره ما</a>
+  </div>
+</header>
+  <main class="cart-container">
+    <section class="cart-list">
+      <div class="cart-item">
+        <img src="https://via.placeholder.com/100" alt="AI Course" class="cart-img">
+        <div class="cart-info">
+          <h3>دوره مقدماتی هوش مصنوعی</h3>
+          <p>مدرس: دکتر امینی</p>
+        </div>
+        <div class="cart-price">۲۵۰,۰۰۰ تومان</div>
+        <button class="remove-btn">✖</button>
+      </div>
+
+      <div class="cart-item">
+        <img src="https://via.placeholder.com/100" alt="AI Advanced" class="cart-img">
+        <div class="cart-info">
+          <h3>مدل‌های زبانی پیشرفته (LLM)</h3>
+          <p>مدرس: مهندس سادیکی</p>
+        </div>
+        <div class="cart-price">۳۹۰,۰۰۰ تومان</div>
+        <button class="remove-btn">✖</button>
+      </div>
+    </section>
+
+    <section class="cart-summary">
+      <h2>خلاصه سفارش</h2>
+      <div class="summary-row">
+        <span>جمع کل:</span>
+        <span class="total-price">۶۴۰,۰۰۰ تومان</span>
+      </div>
+      <a class="checkout-btn" href="./checkout.HTML">تکمیل خرید</a>
+    </section>
+  </main>
+
+<!-- Footer -->
+<footer class="site-footer light">
+  <div class="footer-container">
+    <!-- Logo & About -->
+    <div class="footer-section footer-logo-about">
+      <h2>MAHDAI</h2>
+      <p>ما در آکادمی هوش مصنوعی  MAHDAIبا هدف democratize کردن علم هوش مصنوعی در میان فارسی‌زبانان فعالیت می‌کنیم.</p>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="footer-section footer-links">
+      <h3>لینک‌های سریع</h3>
+      <ul>
+        <li><a href="index.html">خانه</a></li>
+        <li><a href="./shop.html">فروشگاه</a></li>
+        <li><a href="about-us.html">درباره ما</a></li>
+        <li><a href="team.html">اعضای تیم ما</a></li>
+        <li><a href="contact-us.html">تماس با ما</a></li>
+      </ul>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="footer-section footer-newsletter">
+      <h3>عضویت در خبرنامه</h3>
+      <form>
+        <input type="email" placeholder="ایمیل خود را وارد کنید">
+        <button type="submit" class="footer-s">ثبت</button>
+      </form>
+    </div>
+
+    <!-- Social & Contact -->
+    <div class="footer-section footer-social-contact">
+      <h3>ما را دنبال کنید</h3>
+      <div class="social-icons">
+        <a href="#"><img src="icons/facebook.svg" alt="Facebook"></a>
+        <a href="#"><img src="icons/twitter.svg" alt="Twitter"></a>
+        <a href="#"><img src="icons/instagram.svg" alt="Instagram"></a>
+        <a href="#"><img src="icons/linkedin.svg" alt="LinkedIn"></a>
+      </div>
+      <p>ایمیل: info@yoursite.com</p>
+      <p>تلفن: ۰۹۱۲۳۴۵۶۷۸۹</p>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="footer-bottom">
+    <p>© 2025 MahdAI. تمام حقوق محفوظ است.</p>
+  </div>
+</footer>
+</body>
+</html>

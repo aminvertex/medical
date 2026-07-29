@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}مدرس‌های ما | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><span class="eyebrow">تیم آموزشی</span><h1>مدرس‌های متخصص MAHDAI</h1><p>مدرس یک نقش مستقل است و فقط دوره‌های خودش، دانشجویان و فروش مرتبط با همان دوره‌ها را می‌بیند.</p></div></section>
+<section class="section"><div class="container"><div class="instructor-grid large">{% for profile in instructors %}<article class="instructor-card"><img src="{{ profile.avatar_url }}" alt="{{ profile.user.full_name }}"><h3>{{ profile.user.full_name }}</h3><strong>{{ profile.title }}</strong><span class="expertise">{{ profile.expertise }}</span><p>{{ profile.bio }}</p><div class="social-row">{% if profile.website_url %}<a href="{{ profile.website_url }}">وب‌سایت</a>{% endif %}{% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}">لینکدین</a>{% endif %}</div></article>{% empty %}<div class="empty-state"><h3>هنوز پروفایل مدرسی ثبت نشده است</h3><p>با اجرای seed_demo_data اطلاعات نمونه ساخته می‌شود.</p></div>{% endfor %}</div></div></section>
+{% endblock %}

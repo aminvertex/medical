@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% load catalog_tags %}
+{% block title %}پنل مدرس | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><span class="eyebrow">پنل مدرس</span><h1>{{ request.user.full_name }}</h1><p>مدرس فقط آمار دوره‌های منتسب به خودش را مشاهده می‌کند.</p></div></section>
+<section class="section"><div class="container"><div class="metric-grid three"><article><span>تعداد دوره‌ها</span><strong>{{ courses|length }}</strong></article><article><span>دانشجوی یکتا</span><strong>{{ students_count }}</strong></article><article><span>سفارش مرتبط</span><strong>{{ sales_count }}</strong></article></div><div class="content-card"><h2>عملکرد دوره‌های من</h2><div class="table-wrap"><table><thead><tr><th>دوره</th><th>وضعیت</th><th>دانشجو</th><th>درآمد مرتبط</th></tr></thead><tbody>{% for course in courses %}<tr><td><strong>{{ course.title }}</strong><small>{{ course.code }}</small></td><td>{% if course.is_active %}فعال{% else %}غیرفعال{% endif %}</td><td>{{ course.students_count }}</td><td>{{ course.revenue|default:0|toman }}</td></tr>{% empty %}<tr><td colspan="4">هنوز دوره‌ای به این مدرس اختصاص داده نشده است.</td></tr>{% endfor %}</tbody></table></div></div></div></section>
+{% endblock %}

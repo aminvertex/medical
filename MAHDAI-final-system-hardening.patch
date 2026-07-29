@@ -1,0 +1,2750 @@
+diff --git a/Makefile b/Makefile
+index 90c6d2c..4c31e60 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,6 @@
+-.PHONY: setup migrate seed run test check
++.PHONY: setup migrate seed run test check preflight qa
++
++PORT ?= 8000
+ 
+ setup:
+ 	python3 -m venv .venv
+@@ -13,11 +15,17 @@ seed:
+ 	.venv/bin/python manage.py seed_demo_data
+ 
+ run:
+-	.venv/bin/python manage.py runserver
++	.venv/bin/python manage.py runserver 127.0.0.1:$(PORT)
+ 
+ test:
+-	.venv/bin/python manage.py test
++	.venv/bin/python manage.py test accounts catalog orders core dashboard --verbosity 2
+ 
+ check:
+ 	.venv/bin/python manage.py check
+ 	.venv/bin/python manage.py makemigrations --check --dry-run
++
++preflight:
++	.venv/bin/python scripts/preflight.py
++
++qa:
++	PYTHON_BIN=.venv/bin/python ./scripts/qa_all.sh
+diff --git a/README.md b/README.md
+index 973f6b7..00e2fcc 100644
+--- a/README.md
++++ b/README.md
+@@ -31,11 +31,17 @@
+ ./start.sh
+ ```
+ 
++برای اجرای مستقیم روی پورت ۸۰۰۱:
++
++```bash
++PORT=8001 ./start.sh
++```
++
+ در Windows:
+ 
+ ```bat
+ setup_windows.bat
+-start_windows.bat
++start_windows.bat 8001
+ ```
+ 
+ روش دستی:
+@@ -164,19 +170,29 @@ python scripts/preflight.py
+ ```bash
+ python manage.py check
+ python manage.py makemigrations --check --dry-run
+-python manage.py test
++python manage.py test accounts catalog orders core dashboard --verbosity 2
+ ```
+ 
+-تست‌ها جریان‌های مهم زیر را پوشش می‌دهند:
++یا همه کنترل‌ها را یک‌جا اجرا کنید:
++
++```bash
++PYTHON_BIN=.venv/bin/python ./scripts/qa_all.sh
++```
+ 
+-- ثبت‌نام عمومی و اجبار نقش دانشجو
+-- جلوگیری از ایمیل تکراری
+-- تفاوت `401` و `403`
+-- جلوگیری از دوره تکراری در سبد
+-- Snapshot قیمت سفارش
+-- پرداخت آزمایشی و ایجاد Enrollment
+-- جلوگیری از خرید دوباره
+-- ممنوع بودن ثبت نظر برای غیرخریدار
++مجموعهٔ QA شامل **۷۱ تست Runtime** و کنترل‌های مستقل زیر است:
++
++- ساختار داخلی Session Auth و مقداردهی CSRF
++- ثبت‌نام، ورود، خروج، کاربر غیرفعال، Hash رمز و ورودی‌های نامعتبر
++- ماتریس دسترسی ناشناس، دانشجو، مدرس و مدیر برای صفحه‌ها و APIها
++- بررسی واقعی CSRF با `Client(enforce_csrf_checks=True)`
++- رندر تمام صفحات عمومی، حساب، مدرس، مدیر، Swagger و OpenAPI
++- جست‌وجو، دسته‌بندی، مرتب‌سازی، علاقه‌مندی و نظر
++- سبد، حذف، Checkout، Snapshot قیمت، پرداخت idempotent و ترمیم Payment ناقص
++- جلوگیری از مشاهده یا پرداخت سفارش کاربر دیگر و خرید هم‌زمان تکراری
++- کدهای تخفیف منقضی، آینده، حداقل مبلغ، سقف تخفیف و محدودیت مصرف
++- پیام تماس، خبرنامه، تغییر نقش، محافظت Superuser و تغییر وضعیت‌ها
++- یکپارچگی SQLite، Foreign Keyها و سازگاری Order/Payment/Enrollment
++- تطبیق خودکار تمام آدرس‌های API فرانت با Routerهای بک‌اند
+ 
+ ## ساخت مدیر جدید
+ 
+diff --git a/accounts/api.py b/accounts/api.py
+index b718c5a..d4c4fb4 100644
+--- a/accounts/api.py
++++ b/accounts/api.py
+@@ -51,8 +51,12 @@ def register_user(request, payload: RegisterIn):
+     phone = payload.phone.strip()
+     first_name = payload.first_name.strip()
+     last_name = payload.last_name.strip()
+-    if len(first_name) < 2 or len(last_name) < 2:
+-        return Status(400, {"detail": "نام و نام خانوادگی باید حداقل دو نویسه باشند."})
++    if not 2 <= len(first_name) <= 80 or not 2 <= len(last_name) <= 100:
++        return Status(400, {"detail": "طول نام یا نام خانوادگی معتبر نیست."})
++    if len(email) > 254:
++        return Status(400, {"detail": "طول ایمیل معتبر نیست."})
++    if not 8 <= len(payload.password) <= 128:
++        return Status(400, {"detail": "رمز عبور باید بین ۸ تا ۱۲۸ نویسه باشد."})
+     try:
+         validate_email(email)
+     except ValidationError:
+@@ -95,6 +99,8 @@ def register_user(request, payload: RegisterIn):
+ @decorate_view(csrf_protect)
+ def login_user(request, payload: LoginIn):
+     email = payload.email.strip().lower()
++    if len(email) > 254 or len(payload.password) > 128:
++        return Status(401, {"detail": "ایمیل یا رمز عبور نادرست است."})
+     existing_user = User.objects.filter(email=email).first()
+     if existing_user and not existing_user.is_active and existing_user.check_password(payload.password):
+         return Status(403, {"detail": "این حساب غیرفعال شده است."})
+diff --git a/accounts/apps.py b/accounts/apps.py
+index e2e57a7..b40e2f7 100644
+--- a/accounts/apps.py
++++ b/accounts/apps.py
+@@ -5,3 +5,7 @@ class AccountsConfig(AppConfig):
+     default_auto_field = "django.db.models.BigAutoField"
+     name = "accounts"
+     verbose_name = "کاربران و احراز هویت"
++
++    def ready(self):
++        # Register project-specific ``manage.py check`` validations.
++        from . import checks  # noqa: F401
+diff --git a/accounts/checks.py b/accounts/checks.py
+new file mode 100644
+index 0000000..260787c
+--- /dev/null
++++ b/accounts/checks.py
+@@ -0,0 +1,34 @@
++import inspect
++
++from django.core.checks import Error, register
++
++from .security import admin_auth, instructor_auth, student_auth
++
++
++@register()
++def role_session_auth_checks(app_configs, **kwargs):
++    """Fail ``manage.py check`` if custom Ninja session auth regresses."""
++
++    errors = []
++    for name, auth in (
++        ("student_auth", student_auth),
++        ("instructor_auth", instructor_auth),
++        ("admin_auth", admin_auth),
++    ):
++        if not hasattr(auth, "csrf"):
++            errors.append(
++                Error(
++                    f"{name} فاقد ویژگی csrf است؛ سازنده SessionAuth اجرا نشده است.",
++                    id="accounts.E001",
++                )
++            )
++        parameters = list(inspect.signature(auth.authenticate).parameters.values())
++        if len(parameters) < 2 or parameters[0].name != "request":
++            errors.append(
++                Error(
++                    f"امضای authenticate در {name} با Django Ninja سازگار نیست.",
++                    hint="امضای متد باید authenticate(request, key=None) باشد.",
++                    id="accounts.E002",
++                )
++            )
++    return errors
+diff --git a/accounts/models.py b/accounts/models.py
+index 7dcd9d9..6bb0aac 100644
+--- a/accounts/models.py
++++ b/accounts/models.py
+@@ -17,6 +17,8 @@ class UserManager(BaseUserManager):
+         return user
+ 
+     def create_user(self, email, password=None, **extra_fields):
++        if extra_fields.get("is_superuser") is True:
++            raise ValueError("برای ساخت مدیر ارشد از create_superuser استفاده کنید.")
+         extra_fields.setdefault("is_staff", False)
+         extra_fields.setdefault("is_superuser", False)
+         extra_fields.setdefault("role", User.Role.STUDENT)
+@@ -31,6 +33,8 @@ class UserManager(BaseUserManager):
+             raise ValueError("مدیر ارشد باید is_staff=True داشته باشد.")
+         if extra_fields.get("is_superuser") is not True:
+             raise ValueError("مدیر ارشد باید is_superuser=True داشته باشد.")
++        if extra_fields.get("role") != User.Role.ADMIN:
++            raise ValueError("مدیر ارشد باید نقش ADMIN داشته باشد.")
+         return self._create_user(email, password, **extra_fields)
+ 
+ 
+diff --git a/accounts/security.py b/accounts/security.py
+index b31f2f9..5ec3150 100644
+--- a/accounts/security.py
++++ b/accounts/security.py
+@@ -1,6 +1,6 @@
+ from functools import wraps
+ 
+-from django.http import HttpResponseForbidden
++from django.contrib.auth.views import redirect_to_login
+ from django.shortcuts import render
+ from ninja.errors import HttpError
+ from ninja.security import SessionAuth
+@@ -11,15 +11,20 @@ from .models import User
+ class RoleSessionAuth(SessionAuth):
+     """Session authentication plus an explicit role check.
+ 
+-    Anonymous requests receive 401 from Django Ninja. Authenticated users with a
+-    wrong role receive 403, which is the distinction required for the project.
++    ``SessionAuth`` is implemented as cookie authentication. Its constructor
++    initializes CSRF and OpenAPI metadata, so subclasses must call ``super``.
++    Django Ninja also passes the session-cookie value to ``authenticate``.
++
++    Anonymous requests receive 401. Authenticated users with a wrong role
++    receive 403, which keeps authentication and authorization distinguishable.
+     """
+ 
+-    def __init__(self, *roles: str):
+-        self.roles = set(roles)
++    def __init__(self, *roles: str, csrf: bool = True):
++        super().__init__(csrf=csrf)
++        self.roles = frozenset(roles)
+ 
+-    def authenticate(self, request):
+-        user = super().authenticate(request)
++    def authenticate(self, request, key=None):
++        user = super().authenticate(request, key)
+         if not user:
+             return None
+         if user.is_superuser or user.role in self.roles:
+@@ -33,14 +38,19 @@ admin_auth = RoleSessionAuth(User.Role.ADMIN)
+ 
+ 
+ def role_required(*roles):
++    """Protect template views with the same role rules used by the API."""
++
++    allowed_roles = frozenset(roles)
++
+     def decorator(view_func):
+         @wraps(view_func)
+         def wrapper(request, *args, **kwargs):
+             if not request.user.is_authenticated:
+-                from django.contrib.auth.views import redirect_to_login
+                 return redirect_to_login(request.get_full_path())
+-            if request.user.is_superuser or request.user.role in roles:
++            if request.user.is_superuser or request.user.role in allowed_roles:
+                 return view_func(request, *args, **kwargs)
+             return render(request, "errors/403.html", status=403)
++
+         return wrapper
++
+     return decorator
+diff --git a/accounts/tests.py b/accounts/tests.py
+index db2410c..388bfb7 100644
+--- a/accounts/tests.py
++++ b/accounts/tests.py
+@@ -1,94 +1,245 @@
+ import json
+ 
+-from django.test import Client, TestCase
++from django.contrib.auth.models import AnonymousUser
++from django.core import checks
++from django.test import Client, RequestFactory, TestCase
+ from django.urls import reverse
++from ninja.errors import HttpError
+ 
++from tests_support import DEFAULT_PASSWORD, csrf_token, json_request, make_user
+ from .models import User
++from .security import RoleSessionAuth, admin_auth, instructor_auth, student_auth
+ 
+ 
+-class AuthenticationTests(TestCase):
++class RoleSessionAuthTests(TestCase):
++    def setUp(self):
++        self.factory = RequestFactory()
++        self.student = make_user(email="student@example.com", phone="09120000001")
++        self.instructor = make_user(
++            email="instructor@example.com",
++            phone="09120000002",
++            role=User.Role.INSTRUCTOR,
++        )
++        self.admin = make_user(
++            email="admin@example.com",
++            phone="09120000003",
++            role=User.Role.ADMIN,
++        )
++
++    def request_for(self, user):
++        request = self.factory.get("/")
++        request.user = user
++        return request
++
++    def test_custom_auth_initializes_parent_csrf_metadata(self):
++        for auth in (student_auth, instructor_auth, admin_auth):
++            self.assertTrue(hasattr(auth, "csrf"))
++            self.assertTrue(auth.csrf)
++            self.assertEqual(auth.param_name, "sessionid")
++
++    def test_student_auth_accepts_all_application_roles(self):
++        for user in (self.student, self.instructor, self.admin):
++            self.assertEqual(student_auth.authenticate(self.request_for(user), "key"), user)
++
++    def test_instructor_auth_rejects_student_with_403(self):
++        with self.assertRaises(HttpError) as ctx:
++            instructor_auth.authenticate(self.request_for(self.student), "key")
++        self.assertEqual(ctx.exception.status_code, 403)
++
++    def test_admin_auth_rejects_non_admin_with_403(self):
++        with self.assertRaises(HttpError) as ctx:
++            admin_auth.authenticate(self.request_for(self.instructor), "key")
++        self.assertEqual(ctx.exception.status_code, 403)
++
++    def test_anonymous_auth_returns_none(self):
++        request = self.request_for(AnonymousUser())
++        self.assertIsNone(student_auth.authenticate(request, ""))
++
++    def test_django_system_check_validates_auth_objects(self):
++        errors = [error for error in checks.run_checks() if error.id.startswith("accounts.E")]
++        self.assertEqual(errors, [])
++
++    def test_subclass_signature_accepts_cookie_key(self):
++        auth = RoleSessionAuth(User.Role.STUDENT)
++        self.assertEqual(auth.authenticate(self.request_for(self.student), "session-cookie"), self.student)
++
++
++class AuthenticationApiTests(TestCase):
++    register_payload = {
++        "first_name": "کاربر",
++        "last_name": "آزمایشی",
++        "email": "new@example.com",
++        "phone": "09121112233",
++        "password": DEFAULT_PASSWORD,
++        "password_confirm": DEFAULT_PASSWORD,
++    }
++
+     def setUp(self):
+         self.client = Client()
+ 
+-    def test_public_registration_creates_student_and_logs_in(self):
+-        response = self.client.post(
+-            "/api/v1/auth/register",
+-            data=json.dumps(
+-                {
+-                    "first_name": "کاربر",
+-                    "last_name": "آزمایشی",
+-                    "email": "new@example.com",
+-                    "phone": "09121112233",
+-                    "password": "StrongPass123!",
+-                    "password_confirm": "StrongPass123!",
+-                }
+-            ),
+-            content_type="application/json",
+-        )
++    def test_public_registration_creates_student_hashes_password_and_logs_in(self):
++        response = json_request(self.client, "post", "/api/v1/auth/register", self.register_payload)
+         self.assertEqual(response.status_code, 201)
+         user = User.objects.get(email="new@example.com")
+         self.assertEqual(user.role, User.Role.STUDENT)
++        self.assertTrue(user.check_password(DEFAULT_PASSWORD))
++        self.assertNotEqual(user.password, DEFAULT_PASSWORD)
+         self.assertNotIn("password", response.json().get("user", {}))
+         self.assertEqual(int(self.client.session["_auth_user_id"]), user.id)
+ 
+-    def test_invalid_registration_returns_json_400_instead_of_server_error(self):
+-        response = self.client.post(
++    def test_registration_normalizes_email_phone_and_names(self):
++        payload = {**self.register_payload, "email": "  NEW@EXAMPLE.COM  ", "phone": "09121112233"}
++        response = json_request(self.client, "post", "/api/v1/auth/register", payload)
++        self.assertEqual(response.status_code, 201)
++        self.assertTrue(User.objects.filter(email="new@example.com", phone="09121112233").exists())
++
++    def test_registration_validation_matrix_returns_json_not_500(self):
++        cases = [
++            ({"first_name": "ا"}, 400),
++            ({"last_name": "ب"}, 400),
++            ({"email": "not-email"}, 400),
++            ({"phone": "abc"}, 400),
++            ({"phone": "123"}, 400),
++            ({"password_confirm": "DifferentPass123!"}, 400),
++            ({"password": "12345678", "password_confirm": "12345678"}, 400),
++        ]
++        for changes, expected in cases:
++            with self.subTest(changes=changes):
++                payload = {**self.register_payload, **changes}
++                payload["email"] = f"{abs(hash(str(changes)))}@example.com" if "email" not in changes else changes["email"]
++                payload["phone"] = f"09{abs(hash(str(changes))) % 10**9:09d}" if "phone" not in changes else changes["phone"]
++                response = json_request(self.client, "post", "/api/v1/auth/register", payload)
++                self.assertEqual(response.status_code, expected)
++                self.assertEqual(response.headers["Content-Type"], "application/json; charset=utf-8")
++                self.assertIn("detail", response.json())
++
++    def test_duplicate_email_and_phone_are_rejected(self):
++        make_user(email="taken@example.com", phone="09120000020")
++        email_response = json_request(
++            self.client,
++            "post",
+             "/api/v1/auth/register",
+-            data=json.dumps(
+-                {
+-                    "first_name": "کاربر",
+-                    "last_name": "آزمایشی",
+-                    "email": "new@example.com",
+-                    "phone": "09121112233",
+-                    "password": "StrongPass123!",
+-                    "password_confirm": "DifferentPass123!",
+-                }
+-            ),
+-            content_type="application/json",
+-        )
+-        self.assertEqual(response.status_code, 400)
+-        self.assertEqual(response["content-type"], "application/json; charset=utf-8")
+-        self.assertIn("detail", response.json())
+-
+-    def test_duplicate_email_is_rejected(self):
+-        User.objects.create_user(
+-            email="taken@example.com",
+-            password="StrongPass123!",
+-            first_name="A",
+-            last_name="B",
+-            phone="09120000000",
++            {**self.register_payload, "email": "TAKEN@example.com", "phone": "09120000021"},
+         )
+-        response = self.client.post(
++        phone_response = json_request(
++            self.client,
++            "post",
+             "/api/v1/auth/register",
+-            data=json.dumps(
+-                {
+-                    "first_name": "C",
+-                    "last_name": "D",
+-                    "email": "taken@example.com",
+-                    "phone": "09120000009",
+-                    "password": "StrongPass123!",
+-                    "password_confirm": "StrongPass123!",
+-                }
+-            ),
+-            content_type="application/json",
++            {**self.register_payload, "email": "other@example.com", "phone": "09120000020"},
++        )
++        self.assertEqual(email_response.status_code, 409)
++        self.assertEqual(phone_response.status_code, 409)
++
++    def test_login_success_failure_and_inactive_account(self):
++        user = make_user(email="login@example.com", phone="09120000022")
++        ok = json_request(self.client, "post", "/api/v1/auth/login", {"email": user.email, "password": DEFAULT_PASSWORD})
++        self.assertEqual(ok.status_code, 200)
++        self.client.logout()
++        wrong = json_request(self.client, "post", "/api/v1/auth/login", {"email": user.email, "password": "WrongPass123!"})
++        self.assertEqual(wrong.status_code, 401)
++        user.is_active = False
++        user.save(update_fields=["is_active"])
++        inactive = json_request(self.client, "post", "/api/v1/auth/login", {"email": user.email, "password": DEFAULT_PASSWORD})
++        self.assertEqual(inactive.status_code, 403)
++
++    def test_me_and_logout_require_session(self):
++        anon_me = self.client.get("/api/v1/auth/me")
++        self.assertIn(anon_me.status_code, (401, 403))
++        user = make_user(email="me@example.com", phone="09120000023")
++        self.client.force_login(user)
++        me = self.client.get("/api/v1/auth/me")
++        self.assertEqual(me.status_code, 200)
++        self.assertEqual(me.json()["email"], user.email)
++        logout = json_request(self.client, "post", "/api/v1/auth/logout")
++        self.assertEqual(logout.status_code, 200)
++        self.assertNotIn("_auth_user_id", self.client.session)
++
++
++class CsrfProtectionTests(TestCase):
++    def test_public_registration_rejects_missing_csrf_and_accepts_valid_token(self):
++        client = Client(enforce_csrf_checks=True)
++        payload = AuthenticationApiTests.register_payload
++        rejected = json_request(client, "post", "/api/v1/auth/register", payload)
++        self.assertEqual(rejected.status_code, 403)
++        token = csrf_token(client, reverse("auth_page"))
++        accepted = json_request(client, "post", "/api/v1/auth/register", payload, csrf_token=token)
++        self.assertEqual(accepted.status_code, 201)
++
++    def test_authenticated_mutation_enforces_csrf(self):
++        from tests_support import make_course
++
++        client = Client(enforce_csrf_checks=True)
++        user = make_user(email="csrf@example.com", phone="09120000024")
++        course = make_course(code="CSRF-101", slug="csrf-course")
++        client.force_login(user)
++        rejected = json_request(client, "post", "/api/v1/store/cart/items", {"course_id": course.id})
++        self.assertEqual(rejected.status_code, 403)
++        token = csrf_token(client)
++        accepted = json_request(
++            client,
++            "post",
++            "/api/v1/store/cart/items",
++            {"course_id": course.id},
++            csrf_token=token,
+         )
+-        self.assertEqual(response.status_code, 409)
+-
+-    def test_student_gets_real_403_on_admin_page_and_api(self):
+-        student = User.objects.create_user(
+-            email="student@example.com",
+-            password="StrongPass123!",
+-            first_name="دانشجو",
+-            last_name="نمونه",
+-            phone="09120000005",
++        self.assertEqual(accepted.status_code, 201)
++
++
++class RolePageMatrixTests(TestCase):
++    def setUp(self):
++        self.student = make_user(email="role-student@example.com", phone="09120000031")
++        self.instructor = make_user(
++            email="role-instructor@example.com",
++            phone="09120000032",
++            role=User.Role.INSTRUCTOR,
+         )
+-        self.client.force_login(student)
+-        page_response = self.client.get(reverse("dashboard_home"))
+-        api_response = self.client.get("/api/v1/admin/stats")
+-        self.assertEqual(page_response.status_code, 403)
+-        self.assertEqual(api_response.status_code, 403)
+-
+-    def test_anonymous_admin_page_redirects_to_login(self):
+-        response = self.client.get(reverse("dashboard_home"))
+-        self.assertEqual(response.status_code, 302)
+-        self.assertIn(reverse("auth_page"), response.url)
++        self.admin = make_user(
++            email="role-admin@example.com",
++            phone="09120000033",
++            role=User.Role.ADMIN,
++        )
++
++    def test_anonymous_protected_pages_redirect_to_login(self):
++        for name in ("account_overview", "my_orders", "my_courses", "my_favorites", "cart", "checkout", "dashboard_home", "instructor_dashboard"):
++            with self.subTest(name=name):
++                response = self.client.get(reverse(name))
++                self.assertEqual(response.status_code, 302)
++                self.assertIn(reverse("auth_page"), response.url)
++
++    def test_student_instructor_admin_page_access_matrix(self):
++        cases = [
++            (self.student, "dashboard_home", 403),
++            (self.student, "instructor_dashboard", 403),
++            (self.instructor, "instructor_dashboard", 200),
++            (self.instructor, "dashboard_home", 403),
++            (self.admin, "dashboard_home", 200),
++            (self.admin, "instructor_dashboard", 200),
++        ]
++        for user, route, expected in cases:
++            with self.subTest(user=user.role, route=route):
++                self.client.force_login(user)
++                response = self.client.get(reverse(route))
++                self.assertEqual(response.status_code, expected)
++                self.client.logout()
++
++
++class UserManagerTests(TestCase):
++    def test_normal_user_cannot_be_created_as_superuser(self):
++        with self.assertRaises(ValueError):
++            User.objects.create_user(
++                email="bad@example.com",
++                password=DEFAULT_PASSWORD,
++                first_name="Bad",
++                last_name="User",
++                is_superuser=True,
++            )
++
++    def test_superuser_must_have_admin_role(self):
++        with self.assertRaises(ValueError):
++            User.objects.create_superuser(
++                email="root@example.com",
++                password=DEFAULT_PASSWORD,
++                first_name="Root",
++                last_name="User",
++                role=User.Role.STUDENT,
++            )
+diff --git a/catalog/api.py b/catalog/api.py
+index fc0d682..d64171f 100644
+--- a/catalog/api.py
++++ b/catalog/api.py
+@@ -108,13 +108,14 @@ def create_review(request, course_id: int, payload: ReviewIn):
+     course = get_object_or_404(Course, id=course_id, is_active=True)
+     if not 1 <= payload.rating <= 5:
+         return Status(400, {"detail": "امتیاز باید بین ۱ تا ۵ باشد."})
+-    if len(payload.comment.strip()) < 5:
+-        return Status(400, {"detail": "متن نظر باید حداقل ۵ نویسه باشد."})
++    comment = payload.comment.strip()
++    if not 5 <= len(comment) <= 3000:
++        return Status(400, {"detail": "متن نظر باید بین ۵ تا ۳۰۰۰ نویسه باشد."})
+     if not Enrollment.objects.filter(user=request.auth, course=course, is_active=True).exists():
+         return Status(403, {"detail": "فقط دانشجوی خریدار دوره می‌تواند نظر ثبت کند."})
+     review, created = Review.objects.update_or_create(
+         user=request.auth,
+         course=course,
+-        defaults={"rating": payload.rating, "comment": payload.comment.strip(), "status": Review.Status.PENDING},
++        defaults={"rating": payload.rating, "comment": comment, "status": Review.Status.PENDING},
+     )
+     return Status(201 if created else 200, {"message": "نظر شما برای بررسی مدیر ثبت شد.", "review_id": review.id})
+diff --git a/catalog/tests.py b/catalog/tests.py
+index ae771f1..9cfd9b0 100644
+--- a/catalog/tests.py
++++ b/catalog/tests.py
+@@ -1,74 +1,155 @@
+-import json
+-
+ from django.test import Client, TestCase
++from django.urls import reverse
+ 
+ from accounts.models import User
+-from orders.models import Enrollment, Order, OrderItem
+-from .models import Category, Course, Review
++from orders.models import Enrollment
++from tests_support import json_request, make_course, make_paid_enrollment, make_user
++from .models import Category, Course, Favorite, Review
++
++
++class CatalogPublicTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.course = make_course(code="CAT-101", slug="catalog-course", price=900_000)
++        self.other = make_course(code="CAT-202", slug="second-course", price=1_500_000, instructor=self.course.instructor)
++        self.other.category = Category.objects.create(name="دسته دوم", slug="second-category")
++        self.other.save(update_fields=["category"])
++
++    def test_public_catalog_pages_and_apis_render(self):
++        cases = [
++            (reverse("shop"), 200),
++            (reverse("course_detail", kwargs={"slug": self.course.slug}), 200),
++            ("/api/v1/catalog/categories", 200),
++            ("/api/v1/catalog/courses", 200),
++            (f"/api/v1/catalog/courses/{self.course.slug}", 200),
++        ]
++        for path, expected in cases:
++            with self.subTest(path=path):
++                self.assertEqual(self.client.get(path).status_code, expected)
++
++    def test_inactive_courses_are_not_public(self):
++        self.course.is_active = False
++        self.course.save(update_fields=["is_active"])
++        self.assertEqual(self.client.get(reverse("course_detail", kwargs={"slug": self.course.slug})).status_code, 404)
++        self.assertEqual(self.client.get(f"/api/v1/catalog/courses/{self.course.slug}").status_code, 404)
++        ids = {item["id"] for item in self.client.get("/api/v1/catalog/courses").json()}
++        self.assertNotIn(self.course.id, ids)
++
++    def test_search_category_and_sort_filters(self):
++        search = self.client.get("/api/v1/catalog/courses", {"q": "CAT-101"}).json()
++        self.assertEqual([item["id"] for item in search], [self.course.id])
++        category = self.client.get("/api/v1/catalog/courses", {"category": "second-category"}).json()
++        self.assertEqual([item["id"] for item in category], [self.other.id])
++        ascending = self.client.get("/api/v1/catalog/courses", {"sort": "price_asc"}).json()
++        self.assertEqual([item["id"] for item in ascending], [self.course.id, self.other.id])
++        descending = self.client.get("/api/v1/catalog/courses", {"sort": "price_desc"}).json()
++        self.assertEqual([item["id"] for item in descending], [self.other.id, self.course.id])
++
++    def test_unknown_sort_falls_back_without_error(self):
++        response = self.client.get("/api/v1/catalog/courses", {"sort": "invalid"})
++        self.assertEqual(response.status_code, 200)
++        self.assertEqual(len(response.json()), 2)
++
++
++class FavoriteTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.user = make_user(email="favorite@example.com", phone="09120000101")
++        self.course = make_course(code="FAV-101", slug="favorite-course")
++
++    def test_anonymous_cannot_toggle_favorite(self):
++        response = json_request(self.client, "post", f"/api/v1/catalog/courses/{self.course.id}/favorite")
++        self.assertIn(response.status_code, (401, 403))
++
++    def test_toggle_favorite_is_reversible_and_unique(self):
++        self.client.force_login(self.user)
++        first = json_request(self.client, "post", f"/api/v1/catalog/courses/{self.course.id}/favorite")
++        second = json_request(self.client, "post", f"/api/v1/catalog/courses/{self.course.id}/favorite")
++        self.assertEqual(first.status_code, 200)
++        self.assertTrue(first.json()["is_favorite"])
++        self.assertFalse(second.json()["is_favorite"])
++        self.assertFalse(Favorite.objects.filter(user=self.user, course=self.course).exists())
++
++    def test_inactive_or_missing_course_cannot_be_favorited(self):
++        self.client.force_login(self.user)
++        self.course.is_active = False
++        self.course.save(update_fields=["is_active"])
++        self.assertEqual(json_request(self.client, "post", f"/api/v1/catalog/courses/{self.course.id}/favorite").status_code, 404)
++        self.assertEqual(json_request(self.client, "post", "/api/v1/catalog/courses/999999/favorite").status_code, 404)
+ 
+ 
+ class ReviewPermissionTests(TestCase):
+     def setUp(self):
+         self.client = Client()
+-        self.student = User.objects.create_user(
+-            email="student@example.com",
+-            password="StrongPass123!",
+-            first_name="کاربر",
+-            last_name="نمونه",
+-            phone="09120000021",
+-        )
+-        teacher = User.objects.create_user(
+-            email="teacher@example.com",
+-            password="StrongPass123!",
+-            first_name="مدرس",
+-            last_name="نمونه",
+-            phone="09120000022",
+-            role=User.Role.INSTRUCTOR,
+-        )
+-        category = Category.objects.create(name="علم داده", slug="data")
+-        self.course = Course.objects.create(
+-            code="DATA-101",
+-            title="علم داده",
+-            slug="data-science",
+-            category=category,
+-            instructor=teacher,
+-            short_description="توضیح کوتاه",
+-            description="توضیحات کامل",
+-            price=900_000,
+-        )
++        self.student = make_user(email="reviewer@example.com", phone="09120000111")
++        self.course = make_course(code="REV-101", slug="review-course", price=900_000)
+         self.client.force_login(self.student)
+ 
+     def test_non_buyer_cannot_review(self):
+-        response = self.client.post(
++        response = json_request(
++            self.client,
++            "post",
+             f"/api/v1/catalog/courses/{self.course.id}/reviews",
+-            data=json.dumps({"rating": 5, "comment": "دوره خوبی است"}),
+-            content_type="application/json",
++            {"rating": 5, "comment": "دوره خوبی است"},
+         )
+         self.assertEqual(response.status_code, 403)
+ 
+-    def test_buyer_review_is_pending_for_admin_approval(self):
+-        order = Order.objects.create(
+-            user=self.student,
+-            status=Order.Status.PAID,
+-            subtotal=900_000,
+-            total_amount=900_000,
+-            customer_first_name=self.student.first_name,
+-            customer_last_name=self.student.last_name,
+-            customer_email=self.student.email,
+-            customer_phone=self.student.phone,
++    def test_rating_and_comment_validation(self):
++        make_paid_enrollment(self.student, self.course)
++        cases = [
++            ({"rating": 0, "comment": "نظر معتبر است"}, 400),
++            ({"rating": 6, "comment": "نظر معتبر است"}, 400),
++            ({"rating": 5, "comment": "کم"}, 400),
++            ({"rating": 5, "comment": "x" * 3001}, 400),
++        ]
++        for payload, expected in cases:
++            with self.subTest(payload={"rating": payload["rating"], "length": len(payload["comment"])}):
++                response = json_request(
++                    self.client,
++                    "post",
++                    f"/api/v1/catalog/courses/{self.course.id}/reviews",
++                    payload,
++                )
++                self.assertEqual(response.status_code, expected)
++
++    def test_buyer_review_is_pending_and_update_does_not_duplicate(self):
++        make_paid_enrollment(self.student, self.course)
++        first = json_request(
++            self.client,
++            "post",
++            f"/api/v1/catalog/courses/{self.course.id}/reviews",
++            {"rating": 5, "comment": "محتوای پروژه‌محور و مفید بود."},
+         )
+-        item = OrderItem.objects.create(
+-            order=order,
+-            course=self.course,
+-            course_code=self.course.code,
+-            course_title=self.course.title,
+-            unit_price=self.course.price,
++        second = json_request(
++            self.client,
++            "post",
++            f"/api/v1/catalog/courses/{self.course.id}/reviews",
++            {"rating": 4, "comment": "نسخه ویرایش‌شده نظر من است."},
+         )
+-        Enrollment.objects.create(user=self.student, course=self.course, order_item=item)
+-        response = self.client.post(
++        self.assertEqual(first.status_code, 201)
++        self.assertEqual(second.status_code, 200)
++        self.assertEqual(Review.objects.filter(user=self.student, course=self.course).count(), 1)
++        review = Review.objects.get(user=self.student, course=self.course)
++        self.assertEqual(review.rating, 4)
++        self.assertEqual(review.status, Review.Status.PENDING)
++
++    def test_inactive_enrollment_does_not_allow_review(self):
++        _, _, enrollment = make_paid_enrollment(self.student, self.course)
++        enrollment.is_active = False
++        enrollment.save(update_fields=["is_active"])
++        response = json_request(
++            self.client,
++            "post",
+             f"/api/v1/catalog/courses/{self.course.id}/reviews",
+-            data=json.dumps({"rating": 5, "comment": "محتوای پروژه‌محور و مفید بود."}),
+-            content_type="application/json",
++            {"rating": 5, "comment": "نظر معتبر اما بدون دسترسی فعال"},
+         )
+-        self.assertEqual(response.status_code, 201)
+-        self.assertEqual(Review.objects.get().status, Review.Status.PENDING)
++        self.assertEqual(response.status_code, 403)
++
++    def test_only_approved_reviews_appear_on_public_detail(self):
++        make_paid_enrollment(self.student, self.course)
++        Review.objects.create(user=self.student, course=self.course, rating=5, comment="نظر پنهان", status=Review.Status.PENDING)
++        response = self.client.get(reverse("course_detail", kwargs={"slug": self.course.slug}))
++        self.assertNotContains(response, "نظر پنهان")
++        Review.objects.filter(user=self.student, course=self.course).update(status=Review.Status.APPROVED)
++        response = self.client.get(reverse("course_detail", kwargs={"slug": self.course.slug}))
++        self.assertContains(response, "نظر پنهان")
+diff --git a/core/api.py b/core/api.py
+index 9f58058..1a766f7 100644
+--- a/core/api.py
++++ b/core/api.py
+@@ -26,18 +26,28 @@ class NewsletterIn(Schema):
+ @router.post("/contact", auth=None, response={201: dict, codes_4xx: ErrorOut})
+ @decorate_view(csrf_protect)
+ def create_contact_message(request, payload: ContactIn):
++    name = payload.name.strip()
++    email = payload.email.strip().lower()
++    subject = payload.subject.strip()
++    body = payload.message.strip()
++    if not 2 <= len(name) <= 160:
++        return Status(400, {"detail": "نام باید بین ۲ تا ۱۶۰ نویسه باشد."})
++    if not 3 <= len(subject) <= 200:
++        return Status(400, {"detail": "موضوع باید بین ۳ تا ۲۰۰ نویسه باشد."})
++    if not 10 <= len(body) <= 5000:
++        return Status(400, {"detail": "متن پیام باید بین ۱۰ تا ۵۰۰۰ نویسه باشد."})
++    if len(email) > 254:
++        return Status(400, {"detail": "ایمیل معتبر نیست."})
+     try:
+-        validate_email(payload.email.strip())
++        validate_email(email)
+     except ValidationError:
+         return Status(400, {"detail": "ایمیل معتبر نیست."})
+-    if len(payload.message.strip()) < 10:
+-        return Status(400, {"detail": "متن پیام باید حداقل ۱۰ نویسه باشد."})
+     message = ContactMessage.objects.create(
+         user=request.user if request.user.is_authenticated else None,
+-        name=payload.name.strip(),
+-        email=payload.email.strip().lower(),
+-        subject=payload.subject.strip(),
+-        message=payload.message.strip(),
++        name=name,
++        email=email,
++        subject=subject,
++        message=body,
+     )
+     return Status(201, {"message": "پیام شما با موفقیت ثبت شد.", "id": message.id})
+ 
+@@ -46,6 +56,8 @@ def create_contact_message(request, payload: ContactIn):
+ @decorate_view(csrf_protect)
+ def subscribe_newsletter(request, payload: NewsletterIn):
+     email = payload.email.strip().lower()
++    if len(email) > 254:
++        return Status(400, {"detail": "ایمیل معتبر نیست."})
+     try:
+         validate_email(email)
+     except ValidationError:
+diff --git a/core/context_processors.py b/core/context_processors.py
+index ade1271..91d3849 100644
+--- a/core/context_processors.py
++++ b/core/context_processors.py
+@@ -1,8 +1,10 @@
++from orders.models import CartItem
++
++
+ def global_store_context(request):
++    """Expose the authenticated user's cart count without hiding DB errors."""
++
+     cart_count = 0
+     if request.user.is_authenticated:
+-        try:
+-            cart_count = request.user.cart.items.count()
+-        except Exception:
+-            cart_count = 0
++        cart_count = CartItem.objects.filter(cart__user=request.user).count()
+     return {"global_cart_count": cart_count}
+diff --git a/core/tests.py b/core/tests.py
+new file mode 100644
+index 0000000..c028b98
+--- /dev/null
++++ b/core/tests.py
+@@ -0,0 +1,122 @@
++from django.test import Client, TestCase
++from django.urls import reverse
++
++from tests_support import json_request, make_course, make_user
++from .models import ContactMessage, NewsletterSubscription
++
++
++class PublicPageSmokeTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.course = make_course(code="PAGE-101", slug="page-course")
++
++    def test_every_public_page_renders_without_server_error(self):
++        routes = [
++            "home",
++            "about",
++            "team",
++            "contact",
++            "auth_page",
++            "shop",
++        ]
++        for route in routes:
++            with self.subTest(route=route):
++                response = self.client.get(reverse(route))
++                self.assertEqual(response.status_code, 200)
++        detail = self.client.get(reverse("course_detail", kwargs={"slug": self.course.slug}))
++        self.assertEqual(detail.status_code, 200)
++
++    def test_favicon_and_static_route_do_not_return_application_404(self):
++        response = self.client.get("/favicon.ico")
++        self.assertIn(response.status_code, (301, 302))
++        self.assertIn("/static/assets/", response.url)
++
++    def test_swagger_and_openapi_schema_render(self):
++        self.assertEqual(self.client.get("/api/docs").status_code, 200)
++        schema = self.client.get("/api/openapi.json")
++        self.assertEqual(schema.status_code, 200)
++        self.assertIn("paths", schema.json())
++
++    def test_custom_404_page(self):
++        response = self.client.get("/route-that-does-not-exist/")
++        self.assertEqual(response.status_code, 404)
++
++
++class ContactApiTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++
++    def test_valid_guest_message_is_saved(self):
++        response = json_request(
++            self.client,
++            "post",
++            "/api/v1/core/contact",
++            {
++                "name": "مهدی امینی",
++                "email": "Mahdi@Example.com",
++                "subject": "سؤال درباره دوره",
++                "message": "این یک پیام معتبر برای بخش پشتیبانی سامانه است.",
++            },
++        )
++        self.assertEqual(response.status_code, 201)
++        message = ContactMessage.objects.get()
++        self.assertEqual(message.email, "mahdi@example.com")
++        self.assertIsNone(message.user)
++
++    def test_authenticated_message_is_linked_to_user(self):
++        user = make_user(email="contact-user@example.com", phone="09120000301")
++        self.client.force_login(user)
++        response = json_request(
++            self.client,
++            "post",
++            "/api/v1/core/contact",
++            {
++                "name": "کاربر سامانه",
++                "email": user.email,
++                "subject": "درخواست پشتیبانی",
++                "message": "لطفاً وضعیت سفارش من را بررسی و اعلام کنید.",
++            },
++        )
++        self.assertEqual(response.status_code, 201)
++        self.assertEqual(ContactMessage.objects.get().user, user)
++
++    def test_contact_validation_matrix(self):
++        base = {
++            "name": "کاربر معتبر",
++            "email": "valid@example.com",
++            "subject": "موضوع معتبر",
++            "message": "پیام معتبر با طول کافی برای ذخیره شدن.",
++        }
++        cases = [
++            {"name": "ا"},
++            {"name": "x" * 161},
++            {"email": "invalid"},
++            {"subject": "ab"},
++            {"subject": "x" * 201},
++            {"message": "کوتاه"},
++            {"message": "x" * 5001},
++        ]
++        for changes in cases:
++            with self.subTest(changes={k: len(v) if isinstance(v, str) else v for k, v in changes.items()}):
++                response = json_request(self.client, "post", "/api/v1/core/contact", {**base, **changes})
++                self.assertEqual(response.status_code, 400)
++                self.assertIn("detail", response.json())
++        self.assertEqual(ContactMessage.objects.count(), 0)
++
++    def test_newsletter_is_idempotent_and_reactivates(self):
++        first = json_request(self.client, "post", "/api/v1/core/newsletter", {"email": "NEWS@Example.com"})
++        second = json_request(self.client, "post", "/api/v1/core/newsletter", {"email": "news@example.com"})
++        self.assertEqual(first.status_code, 200)
++        self.assertEqual(second.status_code, 200)
++        self.assertEqual(NewsletterSubscription.objects.count(), 1)
++        subscription = NewsletterSubscription.objects.get()
++        subscription.is_active = False
++        subscription.save(update_fields=["is_active"])
++        third = json_request(self.client, "post", "/api/v1/core/newsletter", {"email": "news@example.com"})
++        self.assertEqual(third.status_code, 200)
++        subscription.refresh_from_db()
++        self.assertTrue(subscription.is_active)
++
++    def test_invalid_newsletter_email_returns_400(self):
++        response = json_request(self.client, "post", "/api/v1/core/newsletter", {"email": "bad-email"})
++        self.assertEqual(response.status_code, 400)
+diff --git a/core/views.py b/core/views.py
+index f52917b..881fe98 100644
+--- a/core/views.py
++++ b/core/views.py
+@@ -1,5 +1,4 @@
+-from django.contrib.auth import get_user_model
+-from django.db.models import Avg, Count, Q, Sum
++from django.db.models import Avg, Count, Q
+ from django.shortcuts import render
+ from django.views.decorators.csrf import ensure_csrf_cookie
+ 
+diff --git a/dashboard/api.py b/dashboard/api.py
+index cd05493..d45f08f 100644
+--- a/dashboard/api.py
++++ b/dashboard/api.py
+@@ -1,14 +1,15 @@
+-from django.db.models import Count, Sum
++from django.db import transaction
++from django.db.models import Q, Sum
+ from django.shortcuts import get_object_or_404
+ from ninja import Router, Schema, Status
+ from ninja.responses import codes_4xx
+ 
+ from accounts.models import InstructorProfile, User
+ from accounts.security import admin_auth
+-from config.schemas import ErrorOut
+ from catalog.models import Course, Review
++from config.schemas import ErrorOut
+ from core.models import ContactMessage
+-from orders.models import Enrollment, Order
++from orders.models import Order
+ 
+ router = Router(tags=["Admin Dashboard"])
+ 
+@@ -44,9 +45,14 @@ def admin_stats(request):
+ @router.get("/users", auth=admin_auth)
+ def list_users(request, q: str = ""):
+     users = User.objects.all()
++    q = q.strip()
+     if q:
+-        from django.db.models import Q
+-        users = users.filter(Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(phone__icontains=q))
++        users = users.filter(
++            Q(email__icontains=q)
++            | Q(first_name__icontains=q)
++            | Q(last_name__icontains=q)
++            | Q(phone__icontains=q)
++        )
+     return [
+         {
+             "id": user.id,
+@@ -56,36 +62,69 @@ def list_users(request, q: str = ""):
+             "role": user.role,
+             "role_label": user.get_role_display(),
+             "is_active": user.is_active,
++            "is_superuser": user.is_superuser,
+             "date_joined": user.date_joined.isoformat(),
+         }
+         for user in users[:200]
+     ]
+ 
+ 
+-@router.patch("/users/{user_id}", auth=admin_auth, response={200: dict, codes_4xx: ErrorOut})
++@router.patch(
++    "/users/{user_id}",
++    auth=admin_auth,
++    response={200: dict, codes_4xx: ErrorOut},
++)
++@transaction.atomic
+ def update_user(request, user_id: int, payload: UserUpdateIn):
+-    user = get_object_or_404(User, id=user_id)
+-    if user.id == request.auth.id and payload.is_active is False:
++    user = get_object_or_404(User.objects.select_for_update(), id=user_id)
++    if payload.role is None and payload.is_active is None:
++        return Status(400, {"detail": "حداقل یک مقدار برای تغییر ارسال کنید."})
++
++    is_self = user.id == request.auth.id
++    if user.is_superuser:
++        if payload.role not in (None, User.Role.ADMIN) or payload.is_active is False:
++            return Status(400, {"detail": "مدیر ارشد از پنل سفارشی تغییر یا غیرفعال نمی‌شود."})
++    if is_self and payload.is_active is False:
+         return Status(400, {"detail": "مدیر نمی‌تواند حساب خودش را غیرفعال کند."})
++    if is_self and payload.role is not None and payload.role != User.Role.ADMIN:
++        return Status(400, {"detail": "مدیر نمی‌تواند نقش خودش را کاهش دهد."})
++    if payload.is_active is False and user.taught_courses.filter(is_active=True).exists():
++        return Status(
++            409,
++            {"detail": "ابتدا دوره‌های فعال این مدرس را متوقف یا به مدرس دیگری منتقل کنید."},
++        )
++
+     if payload.role is not None:
+         allowed = {choice for choice, _ in User.Role.choices}
+         if payload.role not in allowed:
+             return Status(400, {"detail": "نقش نامعتبر است."})
+-        if user.is_superuser and payload.role != User.Role.ADMIN:
+-            return Status(400, {"detail": "نقش مدیر ارشد از این مسیر تغییر نمی‌کند."})
+         if payload.role == User.Role.STUDENT and user.taught_courses.exists():
+-            return Status(409, {"detail": "ابتدا دوره‌های این مدرس را به مدرس دیگری منتقل کنید."})
++            return Status(
++                409,
++                {"detail": "ابتدا دوره‌های این مدرس را به مدرس دیگری منتقل کنید."},
++            )
+         user.role = payload.role
+-        user.is_staff = payload.role == User.Role.ADMIN or user.is_superuser
+         if payload.role == User.Role.INSTRUCTOR:
+             InstructorProfile.objects.get_or_create(
+                 user=user,
+-                defaults={"title": "مدرس آکادمی", "bio": "پروفایل مدرس را تکمیل کنید.", "expertise": "هوش مصنوعی"},
++                defaults={
++                    "title": "مدرس آکادمی",
++                    "bio": "پروفایل مدرس را تکمیل کنید.",
++                    "expertise": "هوش مصنوعی",
++                },
+             )
+     if payload.is_active is not None:
+         user.is_active = payload.is_active
+     user.save()
+-    return {"message": "اطلاعات کاربر به‌روزرسانی شد."}
++    return {
++        "message": "اطلاعات کاربر به‌روزرسانی شد.",
++        "user": {
++            "id": user.id,
++            "role": user.role,
++            "role_label": user.get_role_display(),
++            "is_active": user.is_active,
++        },
++    }
+ 
+ 
+ @router.patch("/courses/{course_id}/status", auth=admin_auth)
+@@ -96,7 +135,11 @@ def update_course_status(request, course_id: int, payload: CourseStatusIn):
+     return {"message": "وضعیت دوره تغییر کرد.", "is_active": course.is_active}
+ 
+ 
+-@router.patch("/messages/{message_id}", auth=admin_auth, response={200: dict, codes_4xx: ErrorOut})
++@router.patch(
++    "/messages/{message_id}",
++    auth=admin_auth,
++    response={200: dict, codes_4xx: ErrorOut},
++)
+ def update_message_status(request, message_id: int, payload: MessageStatusIn):
+     message = get_object_or_404(ContactMessage, id=message_id)
+     allowed = {choice for choice, _ in ContactMessage.Status.choices}
+diff --git a/dashboard/tests.py b/dashboard/tests.py
+new file mode 100644
+index 0000000..98defd9
+--- /dev/null
++++ b/dashboard/tests.py
+@@ -0,0 +1,219 @@
++from django.test import Client, TestCase
++from django.urls import reverse
++
++from accounts.models import InstructorProfile, User
++from catalog.models import Course
++from core.models import ContactMessage
++from tests_support import json_request, make_course, make_paid_enrollment, make_user
++
++
++class AdminApiPermissionMatrixTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.student = make_user(email="dash-student@example.com", phone="09120000401")
++        self.instructor = make_user(
++            email="dash-instructor@example.com",
++            phone="09120000402",
++            role=User.Role.INSTRUCTOR,
++        )
++        self.admin = make_user(
++            email="dash-admin@example.com",
++            phone="09120000403",
++            role=User.Role.ADMIN,
++        )
++        self.course = make_course(code="DASH-101", slug="dashboard-course", instructor=self.instructor)
++        self.message = ContactMessage.objects.create(
++            name="مهمان",
++            email="guest@example.com",
++            subject="موضوع تست",
++            message="پیام تست معتبر برای داشبورد مدیریت.",
++        )
++
++    def test_anonymous_student_and_instructor_cannot_use_admin_api(self):
++        endpoints = [
++            ("get", "/api/v1/admin/stats", None),
++            ("get", "/api/v1/admin/users", None),
++            ("patch", f"/api/v1/admin/users/{self.student.id}", {"is_active": False}),
++            ("patch", f"/api/v1/admin/courses/{self.course.id}/status", {"is_active": False}),
++            ("patch", f"/api/v1/admin/messages/{self.message.id}", {"status": "READ"}),
++        ]
++        for user in (None, self.student, self.instructor):
++            if user:
++                self.client.force_login(user)
++            for method, path, payload in endpoints:
++                with self.subTest(role=getattr(user, "role", "anonymous"), method=method, path=path):
++                    response = self.client.get(path) if method == "get" else json_request(self.client, method, path, payload)
++                    self.assertIn(response.status_code, (401, 403))
++            self.client.logout()
++
++    def test_admin_can_open_all_dashboard_pages_and_stats(self):
++        self.client.force_login(self.admin)
++        for route in ("dashboard_home", "dashboard_users", "dashboard_courses", "dashboard_orders", "dashboard_messages"):
++            with self.subTest(route=route):
++                self.assertEqual(self.client.get(reverse(route)).status_code, 200)
++        stats = self.client.get("/api/v1/admin/stats")
++        self.assertEqual(stats.status_code, 200)
++        self.assertIn("revenue", stats.json())
++
++
++class AdminUserMutationTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.admin = make_user(
++            email="manager@example.com",
++            phone="09120000411",
++            role=User.Role.ADMIN,
++        )
++        self.client.force_login(self.admin)
++        self.student = make_user(email="managed@example.com", phone="09120000412")
++
++    def patch_user(self, user, payload):
++        return json_request(self.client, "patch", f"/api/v1/admin/users/{user.id}", payload)
++
++    def test_empty_or_invalid_user_update_is_rejected(self):
++        self.assertEqual(self.patch_user(self.student, {}).status_code, 400)
++        self.assertEqual(self.patch_user(self.student, {"role": "INVALID"}).status_code, 400)
++
++    def test_admin_can_promote_student_to_instructor_and_profile_is_created(self):
++        response = self.patch_user(self.student, {"role": User.Role.INSTRUCTOR})
++        self.assertEqual(response.status_code, 200)
++        self.student.refresh_from_db()
++        self.assertEqual(self.student.role, User.Role.INSTRUCTOR)
++        self.assertTrue(InstructorProfile.objects.filter(user=self.student).exists())
++
++    def test_instructor_with_course_cannot_be_demoted_to_student(self):
++        self.patch_user(self.student, {"role": User.Role.INSTRUCTOR})
++        make_course(code="TEACH-101", slug="teach-course", instructor=self.student)
++        response = self.patch_user(self.student, {"role": User.Role.STUDENT})
++        self.assertEqual(response.status_code, 409)
++
++    def test_instructor_with_active_course_cannot_be_deactivated(self):
++        self.patch_user(self.student, {"role": User.Role.INSTRUCTOR})
++        course = make_course(code="TEACH-202", slug="teach-active-course", instructor=self.student)
++        response = self.patch_user(self.student, {"is_active": False})
++        self.assertEqual(response.status_code, 409)
++        course.is_active = False
++        course.save(update_fields=["is_active"])
++        response = self.patch_user(self.student, {"is_active": False})
++        self.assertEqual(response.status_code, 200)
++
++    def test_admin_cannot_deactivate_or_demote_self(self):
++        self.assertEqual(self.patch_user(self.admin, {"is_active": False}).status_code, 400)
++        self.assertEqual(self.patch_user(self.admin, {"role": User.Role.STUDENT}).status_code, 400)
++        self.admin.refresh_from_db()
++        self.assertTrue(self.admin.is_active)
++        self.assertEqual(self.admin.role, User.Role.ADMIN)
++
++    def test_superuser_cannot_be_changed_from_custom_dashboard(self):
++        root = User.objects.create_superuser(
++            email="root@example.com",
++            password="StrongPass123!",
++            first_name="مدیر",
++            last_name="ارشد",
++            phone="09120000413",
++        )
++        self.assertEqual(self.patch_user(root, {"is_active": False}).status_code, 400)
++        self.assertEqual(self.patch_user(root, {"role": User.Role.STUDENT}).status_code, 400)
++        root.refresh_from_db()
++        self.assertTrue(root.is_active)
++        self.assertEqual(root.role, User.Role.ADMIN)
++
++    def test_role_change_updates_staff_flag(self):
++        response = self.patch_user(self.student, {"role": User.Role.ADMIN})
++        self.assertEqual(response.status_code, 200)
++        self.student.refresh_from_db()
++        self.assertTrue(self.student.is_staff)
++        response = self.patch_user(self.student, {"role": User.Role.STUDENT})
++        self.assertEqual(response.status_code, 200)
++        self.student.refresh_from_db()
++        self.assertFalse(self.student.is_staff)
++
++
++class AdminCourseAndMessageMutationTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.admin = make_user(
++            email="admin-actions@example.com",
++            phone="09120000421",
++            role=User.Role.ADMIN,
++        )
++        self.client.force_login(self.admin)
++        self.course = make_course(code="ACTION-101", slug="action-course")
++        self.message = ContactMessage.objects.create(
++            name="کاربر",
++            email="user@example.com",
++            subject="پیام مدیریتی",
++            message="این پیام برای بررسی تغییر وضعیت ساخته شده است.",
++        )
++
++    def test_course_status_toggle(self):
++        response = json_request(
++            self.client,
++            "patch",
++            f"/api/v1/admin/courses/{self.course.id}/status",
++            {"is_active": False},
++        )
++        self.assertEqual(response.status_code, 200)
++        self.course.refresh_from_db()
++        self.assertFalse(self.course.is_active)
++
++    def test_message_status_validation_and_update(self):
++        invalid = json_request(
++            self.client,
++            "patch",
++            f"/api/v1/admin/messages/{self.message.id}",
++            {"status": "INVALID"},
++        )
++        self.assertEqual(invalid.status_code, 400)
++        valid = json_request(
++            self.client,
++            "patch",
++            f"/api/v1/admin/messages/{self.message.id}",
++            {"status": ContactMessage.Status.READ},
++        )
++        self.assertEqual(valid.status_code, 200)
++        self.message.refresh_from_db()
++        self.assertEqual(self.message.status, ContactMessage.Status.READ)
++
++    def test_missing_resources_return_404_not_500(self):
++        self.assertEqual(
++            json_request(self.client, "patch", "/api/v1/admin/users/999999", {"is_active": False}).status_code,
++            404,
++        )
++        self.assertEqual(
++            json_request(self.client, "patch", "/api/v1/admin/courses/999999/status", {"is_active": False}).status_code,
++            404,
++        )
++        self.assertEqual(
++            json_request(self.client, "patch", "/api/v1/admin/messages/999999", {"status": "READ"}).status_code,
++            404,
++        )
++
++
++class InstructorDashboardAggregationTests(TestCase):
++    def test_revenue_is_not_multiplied_by_enrollment_join(self):
++        instructor = make_user(
++            email="aggregation-instructor@example.com",
++            phone="09120000431",
++            role=User.Role.INSTRUCTOR,
++        )
++        course = make_course(
++            code="AGG-101",
++            slug="aggregation-course",
++            price=1_000_000,
++            instructor=instructor,
++        )
++        first = make_user(email="agg-one@example.com", phone="09120000432")
++        second = make_user(email="agg-two@example.com", phone="09120000433")
++        make_paid_enrollment(first, course)
++        make_paid_enrollment(second, course)
++
++        self.client.force_login(instructor)
++        response = self.client.get(reverse("instructor_dashboard"))
++        self.assertEqual(response.status_code, 200)
++        annotated = list(response.context["courses"])
++        self.assertEqual(len(annotated), 1)
++        self.assertEqual(annotated[0].students_count, 2)
++        self.assertEqual(annotated[0].revenue, 2_000_000)
++        self.assertEqual(response.context["students_count"], 2)
++        self.assertEqual(response.context["sales_count"], 2)
+diff --git a/dashboard/views.py b/dashboard/views.py
+index 6c3c483..435da8d 100644
+--- a/dashboard/views.py
++++ b/dashboard/views.py
+@@ -1,11 +1,12 @@
+-from django.db.models import Count, Q, Sum
++from django.db.models import BigIntegerField, Count, OuterRef, Q, Subquery, Sum, Value
++from django.db.models.functions import Coalesce
+ from django.shortcuts import render
+ 
+ from accounts.models import User
+ from accounts.security import role_required
+ from catalog.models import Course, Review
+ from core.models import ContactMessage
+-from orders.models import Enrollment, Order
++from orders.models import Enrollment, Order, OrderItem
+ 
+ 
+ @role_required(User.Role.ADMIN)
+@@ -52,9 +53,26 @@ def dashboard_messages(request):
+ 
+ @role_required(User.Role.INSTRUCTOR, User.Role.ADMIN)
+ def instructor_dashboard(request):
++    paid_revenue = (
++        OrderItem.objects.filter(
++            course_id=OuterRef("pk"),
++            order__status=Order.Status.PAID,
++        )
++        .values("course_id")
++        .annotate(total=Sum("unit_price"))
++        .values("total")[:1]
++    )
+     courses = Course.objects.filter(instructor=request.user).annotate(
+-        students_count=Count("enrollments", filter=Q(enrollments__is_active=True), distinct=True),
+-        revenue=Sum("order_items__unit_price", filter=Q(order_items__order__status=Order.Status.PAID)),
++        students_count=Count(
++            "enrollments",
++            filter=Q(enrollments__is_active=True),
++            distinct=True,
++        ),
++        revenue=Coalesce(
++            Subquery(paid_revenue, output_field=BigIntegerField()),
++            Value(0, output_field=BigIntegerField()),
++            output_field=BigIntegerField(),
++        ),
+     )
+     course_ids = list(courses.values_list("id", flat=True))
+     context = {
+diff --git a/docs/QA_REPORT_FA.md b/docs/QA_REPORT_FA.md
+index 537d617..3b5ac0b 100644
+--- a/docs/QA_REPORT_FA.md
++++ b/docs/QA_REPORT_FA.md
+@@ -1,43 +1,75 @@
+ # گزارش کنترل کیفیت پروژه
+ 
+-## کنترل‌های انجام‌شده در محیط ساخت
++## اصلاحات پایداری و امنیتی
+ 
+-- بازبینی ساختار ۱۰ صفحه و ۶۱۲۰ خط فایل متنی فرانت اولیه
+-- بررسی نحوی تمام فایل‌های Python با `compileall`
+-- بررسی نحوی تمام فایل‌های JavaScript با `node --check`
+-- کنترل تمام نام‌های `{% url %}` استفاده‌شده در Templateها
+-- کنترل وجود تمام فایل‌های ارجاع‌شده با `{% static %}`
+-- کنترل وجود Migration اولیه برای `accounts`, `catalog`, `core`, `orders`
+-- کنترل نبود مسیر Static یا Route نام‌گذاری‌شدهٔ مفقود
+-- کنترل اسکریپت‌های Shell با `bash -n`
+-- نگهداری کامل نسخهٔ اولیه در `legacy_frontend/`
++- اصلاح کامل `RoleSessionAuth`: اجرای سازندهٔ `SessionAuth` و امضای صحیح `authenticate(request, key)`
++- افزودن System Check اختصاصی برای جلوگیری از بازگشت خطای `csrf`
++- استانداردسازی تمام پاسخ‌های چندحالته Django Ninja و کنترل Schemaهای 4xx
++- جلوگیری از افشای وجود شماره سفارش متعلق به کاربر دیگر
++- پرداخت idempotent و ترمیم خودکار Payment ناقص یا مبلغ ناسازگار
++- جلوگیری از پرداخت دو سفارش معلق برای یک دورهٔ یکسان
++- قفل‌کردن Coupon هنگام پرداخت برای رعایت محدودیت کلی و هر کاربر
++- محافظت مدیر از غیرفعال‌کردن یا کاهش نقش خودش و محافظت Superuser
++- اعتبارسنجی طول نام، ایمیل، رمز، پیام تماس، نظر و اطلاعات Checkout
++- افزایش فضای تصادفی شماره سفارش
+ 
+-برای تکرار کنترل‌های مستقل از Django:
++## کنترل‌های مستقل اجراشده در محیط ساخت
++
++فرمان زیر با موفقیت اجرا شده است:
+ 
+ ```bash
+ python scripts/preflight.py
+ ```
+ 
+-پس از نصب وابستگی‌ها، کنترل‌های Runtime را اجرا کنید:
++این فرمان موارد زیر را کنترل می‌کند:
++
++- نحو تمام فایل‌های Python و ۷۱ تست نوشته‌شده
++- نحو ۸ فایل JavaScript با `node --check`
++- وجود فایل‌های ضروری پروژه
++- صحت تمام نام‌های `{% url %}` در Templateها
++- وجود تمام فایل‌های `{% static %}`
++- نبود `id` تکراری داخل هر Template
++- تطبیق ۱۳ فراخوانی API فرانت با Routeهای Django Ninja
++- وجود Response Schema برای هر endpoint دارای `Status(...)`
++- اجرای `super().__init__()` و امضای صحیح `RoleSessionAuth`
++- `PRAGMA integrity_check` و `PRAGMA foreign_key_check` روی SQLite
++- سازگاری مبلغ سفارش، پرداخت موفق و Enrollment فعال
++- نبود مسیر مطلق وابسته به کامپیوتر سازنده در سورس
++- صحت نحوی اسکریپت‌های Shell
++
++## مجموعه تست Runtime
++
++در پنج app مجموعاً **۷۱ تست** نوشته شده است:
++
++| بخش | تعداد تست |
++|---|---:|
++| Accounts و دسترسی‌ها | ۱۹ |
++| Catalog، علاقه‌مندی و Review | ۱۲ |
++| Cart، Order، Coupon و Payment | ۱۸ |
++| Dashboard و نقش مدیر | ۱۳ |
++| صفحات عمومی، تماس و خبرنامه | ۹ |
++
++سناریوها شامل ثبت‌نام و ورود، Session و CSRF واقعی، 401/403، تمام صفحه‌ها، Swagger، جست‌وجو و فیلتر، سبد، Checkout، پرداخت، مالکیت سفارش، Snapshot، خرید تکراری، Coupon، Review، پیام تماس و عملیات مدیریتی هستند.
++
++## اجرای کامل روی سیستم پروژه
++
++از ریشه پروژه و با interpreter همان پروژه اجرا شود:
+ 
+ ```bash
+-python manage.py check
+-python manage.py makemigrations --check --dry-run
+-python manage.py migrate
+-python manage.py test
++cd <PROJECT_ROOT>
++source .venv/bin/activate
++PYTHON_BIN=.venv/bin/python ./scripts/qa_all.sh
+ ```
+ 
+-## سناریوهای تست خودکار نوشته‌شده
++این دستور به‌ترتیب اجرا می‌کند:
+ 
+-- ثبت‌نام و اجبار نقش `STUDENT`
+-- جلوگیری از ایمیل تکراری
+-- Redirect کاربر ناشناس و پاسخ واقعی 403 برای نقش نامعتبر
+-- جلوگیری از افزودن دوره تکراری به سبد
+-- محاسبه قیمت و Snapshot در سرور
+-- پرداخت آزمایشی، ساخت Payment و صدور Enrollment
+-- جلوگیری از خرید دوباره یک دوره
+-- ممنوعیت نظر برای غیرخریدار و ثبت نظر خریدار با وضعیت Pending
++```text
++preflight
++manage.py check
++makemigrations --check --dry-run
++71 Django tests
++```
+ 
+ ## محدودیت محیط ساخت
+ 
+-محیط ساخت به اینترنت و بسته‌های Django دسترسی اجرایی نداشت؛ بنابراین `manage.py check`، اجرای Migration روی SQLite و تست‌های Runtime در همین محیط اجرا نشدند. فایل‌های Migration، تست‌ها، دادهٔ Seed و اسکریپت راه‌اندازی آماده‌اند و چهار فرمان بالا باید پس از نصب `requirements.txt` اجرا شوند. این محدودیت به‌جای ادعای اجرای نادرست، صریح ثبت شده است.
++محیط ساخت به نصب بسته‌های Python از شبکه دسترسی نداشت؛ بنابراین اجرای خود `manage.py test` در این محیط ممکن نبود. با این حال، تمام ۷۱ تست از نظر نحو Compile شده‌اند و کنترل‌های مستقل بالا واقعاً اجرا و موفق شده‌اند. اسکریپت `qa_all.sh` برای اجرای Runtime روی محیط محلی پروژه اضافه شده است.
+diff --git a/orders/api.py b/orders/api.py
+index 794fcad..6803641 100644
+--- a/orders/api.py
++++ b/orders/api.py
+@@ -73,10 +73,15 @@ def delete_cart_item(request, course_id: int):
+ 
+ @router.post("/checkout", auth=student_auth, response={201: dict, codes_4xx: ErrorOut})
+ def checkout(request, payload: CheckoutIn):
+-    if len(payload.first_name.strip()) < 2 or len(payload.last_name.strip()) < 2:
++    first_name = payload.first_name.strip()
++    last_name = payload.last_name.strip()
++    email = payload.email.strip().lower()
++    if not 2 <= len(first_name) <= 80 or not 2 <= len(last_name) <= 100:
+         return Status(400, {"detail": "نام و نام خانوادگی معتبر نیست."})
++    if len(email) > 254:
++        return Status(400, {"detail": "ایمیل معتبر نیست."})
+     try:
+-        validate_email(payload.email.strip())
++        validate_email(email)
+     except ValidationError:
+         return Status(400, {"detail": "ایمیل معتبر نیست."})
+     phone = payload.phone.strip()
+@@ -85,9 +90,9 @@ def checkout(request, payload: CheckoutIn):
+     try:
+         order = create_order(
+             request.auth,
+-            first_name=payload.first_name,
+-            last_name=payload.last_name,
+-            email=payload.email,
++            first_name=first_name,
++            last_name=last_name,
++            email=email,
+             phone=payload.phone,
+             coupon_code=payload.coupon_code,
+         )
+diff --git a/orders/models.py b/orders/models.py
+index 8ebfafb..8bdfe8b 100644
+--- a/orders/models.py
++++ b/orders/models.py
+@@ -108,7 +108,7 @@ class Order(models.Model):
+ 
+     def save(self, *args, **kwargs):
+         if not self.number:
+-            self.number = f"MAH-{timezone.localdate():%y%m%d}-{secrets.token_hex(3).upper()}"
++            self.number = f"MAH-{timezone.localdate():%y%m%d}-{secrets.token_hex(5).upper()}"
+         super().save(*args, **kwargs)
+ 
+ 
+diff --git a/orders/services.py b/orders/services.py
+index d38d125..5ab56d0 100644
+--- a/orders/services.py
++++ b/orders/services.py
+@@ -1,7 +1,7 @@
+ import secrets
+ from dataclasses import dataclass
+ 
+-from django.db import transaction
++from django.db import IntegrityError, transaction
+ from django.utils import timezone
+ 
+ from catalog.models import Course
+@@ -15,7 +15,7 @@ class StoreError(Exception):
+         self.status = status
+ 
+ 
+-@dataclass
++@dataclass(frozen=True)
+ class PriceSummary:
+     subtotal: int
+     discount: int
+@@ -35,7 +35,11 @@ def add_course(user, course_id: int):
+     if Enrollment.objects.filter(user=user, course=course, is_active=True).exists():
+         raise StoreError("این دوره قبلاً خریداری شده است.", 409)
+     cart = get_cart(user)
+-    item, created = CartItem.objects.get_or_create(cart=cart, course=course)
++    try:
++        item, created = CartItem.objects.get_or_create(cart=cart, course=course)
++    except IntegrityError as exc:
++        # A concurrent request may win between SELECT and INSERT.
++        raise StoreError("این دوره از قبل در سبد خرید است.", 409) from exc
+     if not created:
+         raise StoreError("این دوره از قبل در سبد خرید است.", 409)
+     return item
+@@ -48,11 +52,14 @@ def remove_course(user, course_id: int):
+         raise StoreError("این دوره در سبد خرید وجود ندارد.", 404)
+ 
+ 
+-def validate_coupon(user, code: str, subtotal: int):
++def validate_coupon(user, code: str, subtotal: int, *, lock: bool = False):
+     if not code:
+         return None
+     now = timezone.now()
+-    coupon = Coupon.objects.filter(code=code.strip().upper(), is_active=True).first()
++    coupons = Coupon.objects
++    if lock:
++        coupons = coupons.select_for_update()
++    coupon = coupons.filter(code=code.strip().upper(), is_active=True).first()
+     if not coupon:
+         raise StoreError("کد تخفیف معتبر نیست.")
+     if coupon.starts_at > now or coupon.ends_at < now:
+@@ -75,7 +82,12 @@ def calculate_prices(user, items, coupon_code=""):
+         discount = subtotal * coupon.discount_percent // 100
+         if coupon.max_discount_amount is not None:
+             discount = min(discount, coupon.max_discount_amount)
+-    return PriceSummary(subtotal=subtotal, discount=discount, total=max(subtotal - discount, 0), coupon=coupon)
++    return PriceSummary(
++        subtotal=subtotal,
++        discount=discount,
++        total=max(subtotal - discount, 0),
++        coupon=coupon,
++    )
+ 
+ 
+ @transaction.atomic
+@@ -83,16 +95,29 @@ def create_order(user, *, first_name, last_name, email, phone, coupon_code=""):
+     cart = Cart.objects.select_for_update().filter(user=user).first()
+     if not cart:
+         raise StoreError("سبد خرید خالی است.")
+-    items = list(CartItem.objects.select_for_update().filter(cart=cart).select_related("course"))
++    items = list(
++        CartItem.objects.select_for_update()
++        .filter(cart=cart)
++        .select_related("course")
++    )
+     if not items:
+         raise StoreError("سبد خرید خالی است.")
+-    purchased_ids = set(Enrollment.objects.filter(user=user, is_active=True).values_list("course_id", flat=True))
+-    duplicate = next((item.course.title for item in items if item.course_id in purchased_ids), None)
++
++    purchased_ids = set(
++        Enrollment.objects.filter(user=user, is_active=True).values_list(
++            "course_id", flat=True
++        )
++    )
++    duplicate = next(
++        (item.course.title for item in items if item.course_id in purchased_ids),
++        None,
++    )
+     if duplicate:
+         raise StoreError(f"دوره «{duplicate}» قبلاً خریداری شده است.", 409)
+     inactive = next((item.course.title for item in items if not item.course.is_active), None)
+     if inactive:
+         raise StoreError(f"دوره «{inactive}» دیگر قابل خرید نیست.", 409)
++
+     prices = calculate_prices(user, items, coupon_code)
+     order = Order.objects.create(
+         user=user,
+@@ -105,14 +130,18 @@ def create_order(user, *, first_name, last_name, email, phone, coupon_code=""):
+         customer_email=email.strip().lower(),
+         customer_phone=phone.strip(),
+     )
+-    for item in items:
+-        OrderItem.objects.create(
+-            order=order,
+-            course=item.course,
+-            course_code=item.course.code,
+-            course_title=item.course.title,
+-            unit_price=item.course.price,
+-        )
++    OrderItem.objects.bulk_create(
++        [
++            OrderItem(
++                order=order,
++                course=item.course,
++                course_code=item.course.code,
++                course_title=item.course.title,
++                unit_price=item.course.price,
++            )
++            for item in items
++        ]
++    )
+     Payment.objects.create(order=order, amount=prices.total)
+     if prices.coupon:
+         CouponUsage.objects.create(coupon=prices.coupon, user=user, order=order)
+@@ -120,39 +149,101 @@ def create_order(user, *, first_name, last_name, email, phone, coupon_code=""):
+     return order
+ 
+ 
++def _reference_code():
++    return f"SIM-{timezone.localdate():%Y%m%d}-{secrets.token_hex(4).upper()}"
++
++
++def _payment_for_order(order):
++    """Return a payment even when old/demo data is incomplete."""
++
++    payment, _ = Payment.objects.select_for_update().get_or_create(
++        order=order,
++        defaults={"amount": order.total_amount},
++    )
++    if payment.amount != order.total_amount:
++        payment.amount = order.total_amount
++        payment.save(update_fields=["amount"])
++    return payment
++
++
++def _ensure_enrollments(order):
++    for item in order.items.all():
++        if not item.course_id:
++            continue
++        enrollment, created = Enrollment.objects.get_or_create(
++            user=order.user,
++            course=item.course,
++            defaults={"order_item": item, "is_active": True},
++        )
++        if not created and enrollment.order_item_id != item.id:
++            if enrollment.is_active:
++                raise StoreError(
++                    f"دوره «{item.course_title}» قبلاً با سفارش دیگری خریداری شده است.",
++                    409,
++                )
++            enrollment.order_item = item
++            enrollment.is_active = True
++            enrollment.save(update_fields=["order_item", "is_active"])
++        elif not created and not enrollment.is_active:
++            enrollment.is_active = True
++            enrollment.save(update_fields=["is_active"])
++
++
+ @transaction.atomic
+ def simulate_payment(user, order_number: str):
+-    order = Order.objects.select_for_update().select_related("payment", "coupon").prefetch_related("items__course").filter(number=order_number).first()
++    orders = (
++        Order.objects.select_for_update()
++        .select_related("coupon")
++        .prefetch_related("items__course")
++    )
++    if not user.is_admin_role:
++        orders = orders.filter(user=user)
++    order = orders.filter(number=order_number).first()
+     if not order:
++        # Do not disclose whether another user's order number exists.
+         raise StoreError("سفارش پیدا نشد.", 404)
+-    if order.user_id != user.id and not user.is_admin_role:
+-        raise StoreError("این سفارش متعلق به شما نیست.", 403)
++
++    payment = _payment_for_order(order)
++
+     if order.status == Order.Status.PAID:
++        _ensure_enrollments(order)
++        if payment.status != Payment.Status.SUCCESS:
++            payment.status = Payment.Status.SUCCESS
++            payment.reference_code = payment.reference_code or _reference_code()
++            payment.paid_at = order.paid_at or timezone.now()
++            payment.save(update_fields=["status", "reference_code", "paid_at"])
+         return order
++
+     if order.status != Order.Status.PENDING:
+         raise StoreError("این سفارش قابل پرداخت نیست.", 409)
++
++    # Prevent two pending orders from purchasing the same course.
++    course_ids = [item.course_id for item in order.items.all() if item.course_id]
++    purchased = Enrollment.objects.filter(
++        user=order.user,
++        course_id__in=course_ids,
++        is_active=True,
++    ).select_related("course").first()
++    if purchased:
++        raise StoreError(
++            f"دوره «{purchased.course.title}» قبلاً خریداری شده است.",
++            409,
++        )
++
+     if order.coupon_id:
+-        # اعتبار تخفیف در لحظه پرداخت دوباره کنترل می‌شود تا سفارش‌های معطل
+-        # نتوانند ظرفیت یا محدودیت هر کاربر را دور بزنند.
+-        validate_coupon(order.user, order.coupon.code, order.subtotal)
++        # Lock the coupon while enforcing global/per-user limits, so concurrent
++        # payments cannot consume more uses than allowed.
++        validate_coupon(order.user, order.coupon.code, order.subtotal, lock=True)
++
+     now = timezone.now()
++    _ensure_enrollments(order)
++
+     order.status = Order.Status.PAID
+     order.paid_at = now
+     order.save(update_fields=["status", "paid_at", "updated_at"])
+-    payment = order.payment
++
+     payment.status = Payment.Status.SUCCESS
+-    payment.reference_code = f"SIM-{timezone.localdate():%Y%m%d}-{secrets.token_hex(4).upper()}"
++    payment.reference_code = payment.reference_code or _reference_code()
+     payment.paid_at = now
+     payment.save(update_fields=["status", "reference_code", "paid_at"])
+-    for item in order.items.all():
+-        if item.course_id:
+-            enrollment, created = Enrollment.objects.get_or_create(
+-                user=order.user,
+-                course=item.course,
+-                defaults={"order_item": item, "is_active": True},
+-            )
+-            if not created and not enrollment.is_active:
+-                enrollment.is_active = True
+-                enrollment.order_item = item
+-                enrollment.save(update_fields=["is_active", "order_item"])
+     return order
+diff --git a/orders/tests.py b/orders/tests.py
+index 452d770..3e5b60c 100644
+--- a/orders/tests.py
++++ b/orders/tests.py
+@@ -1,58 +1,63 @@
+-from django.test import TestCase
++from datetime import timedelta
++
++from django.test import Client, TestCase
+ from django.utils import timezone
+ 
+ from accounts.models import User
+-from catalog.models import Category, Course
+-from .models import CartItem, Enrollment, Order
+-from .services import StoreError, add_course, create_order, simulate_payment
++from tests_support import json_request, make_course, make_paid_enrollment, make_user
++from .models import CartItem, Coupon, CouponUsage, Enrollment, Order, Payment
++from .services import StoreError, add_course, create_order, remove_course, simulate_payment, validate_coupon
+ 
+ 
+ class StoreWorkflowTests(TestCase):
+     def setUp(self):
+-        self.student = User.objects.create_user(
+-            email="student@example.com",
+-            password="StrongPass123!",
+-            first_name="علی",
+-            last_name="دانشجو",
+-            phone="09120000011",
+-        )
+-        self.instructor = User.objects.create_user(
+-            email="teacher@example.com",
+-            password="StrongPass123!",
+-            first_name="مدرس",
+-            last_name="نمونه",
+-            phone="09120000012",
+-            role=User.Role.INSTRUCTOR,
++        self.student = make_user(email="buyer@example.com", phone="09120000201")
++        self.other = make_user(email="other@example.com", phone="09120000202")
++        self.admin = make_user(
++            email="order-admin@example.com",
++            phone="09120000203",
++            role=User.Role.ADMIN,
+         )
+-        category = Category.objects.create(name="یادگیری ماشین", slug="ml")
+-        self.course = Course.objects.create(
+-            code="ML-101",
+-            title="یادگیری ماشین",
+-            slug="machine-learning",
+-            category=category,
+-            instructor=self.instructor,
+-            short_description="دوره آزمایشی",
+-            description="توضیحات دوره آزمایشی",
+-            price=1_000_000,
+-            duration_hours=10,
++        self.course = make_course(code="ORD-101", slug="order-course", price=1_000_000)
++
++    def create_pending_order(self, user=None, course=None, coupon_code=""):
++        user = user or self.student
++        course = course or self.course
++        add_course(user, course.id)
++        return create_order(
++            user,
++            first_name=user.first_name,
++            last_name=user.last_name,
++            email=user.email,
++            phone=user.phone,
++            coupon_code=coupon_code,
+         )
+ 
+-    def test_duplicate_course_cannot_be_added_to_cart(self):
++    def test_add_remove_duplicate_missing_inactive_and_owned_course(self):
+         add_course(self.student, self.course.id)
+-        with self.assertRaises(StoreError) as ctx:
++        with self.assertRaises(StoreError) as duplicate:
+             add_course(self.student, self.course.id)
+-        self.assertEqual(ctx.exception.status, 409)
+-        self.assertEqual(CartItem.objects.filter(cart__user=self.student).count(), 1)
++        self.assertEqual(duplicate.exception.status, 409)
++        remove_course(self.student, self.course.id)
++        with self.assertRaises(StoreError) as missing_remove:
++            remove_course(self.student, self.course.id)
++        self.assertEqual(missing_remove.exception.status, 404)
+ 
+-    def test_checkout_uses_server_price_snapshot_then_enrolls_after_payment(self):
+-        add_course(self.student, self.course.id)
+-        order = create_order(
+-            self.student,
+-            first_name="علی",
+-            last_name="دانشجو",
+-            email=self.student.email,
+-            phone=self.student.phone,
+-        )
++        self.course.is_active = False
++        self.course.save(update_fields=["is_active"])
++        with self.assertRaises(StoreError) as inactive:
++            add_course(self.student, self.course.id)
++        self.assertEqual(inactive.exception.status, 404)
++
++        self.course.is_active = True
++        self.course.save(update_fields=["is_active"])
++        make_paid_enrollment(self.student, self.course)
++        with self.assertRaises(StoreError) as purchased:
++            add_course(self.student, self.course.id)
++        self.assertEqual(purchased.exception.status, 409)
++
++    def test_checkout_uses_server_price_snapshot_clears_cart_and_enrolls_after_payment(self):
++        order = self.create_pending_order()
+         self.assertEqual(order.status, Order.Status.PENDING)
+         self.assertEqual(order.items.get().unit_price, 1_000_000)
+         self.assertEqual(order.payment.amount, 1_000_000)
+@@ -62,22 +67,278 @@ class StoreWorkflowTests(TestCase):
+         self.course.save(update_fields=["price"])
+         order.refresh_from_db()
+         self.assertEqual(order.items.get().unit_price, 1_000_000)
++        self.assertEqual(order.total_amount, 1_000_000)
+ 
+         paid_order = simulate_payment(self.student, order.number)
++        paid_order.refresh_from_db()
+         self.assertEqual(paid_order.status, Order.Status.PAID)
+         self.assertTrue(paid_order.payment.reference_code.startswith("SIM-"))
+         self.assertTrue(Enrollment.objects.filter(user=self.student, course=self.course, is_active=True).exists())
+ 
+-    def test_user_cannot_buy_an_enrolled_course_again(self):
++    def test_empty_cart_and_inactive_course_at_checkout_are_rejected(self):
++        with self.assertRaises(StoreError):
++            create_order(
++                self.student,
++                first_name="علی",
++                last_name="آزمایشی",
++                email=self.student.email,
++                phone=self.student.phone,
++            )
+         add_course(self.student, self.course.id)
+-        order = create_order(
+-            self.student,
+-            first_name="علی",
+-            last_name="دانشجو",
+-            email=self.student.email,
+-            phone=self.student.phone,
+-        )
++        self.course.is_active = False
++        self.course.save(update_fields=["is_active"])
++        with self.assertRaises(StoreError) as ctx:
++            create_order(
++                self.student,
++                first_name="علی",
++                last_name="آزمایشی",
++                email=self.student.email,
++                phone=self.student.phone,
++            )
++        self.assertEqual(ctx.exception.status, 409)
++
++    def test_payment_is_idempotent_and_repairs_missing_payment(self):
++        order = self.create_pending_order()
++        order.payment.delete()
++        first = simulate_payment(self.student, order.number)
++        second = simulate_payment(self.student, order.number)
++        self.assertEqual(first.pk, second.pk)
++        payment = Payment.objects.get(order=order)
++        self.assertEqual(payment.status, Payment.Status.SUCCESS)
++        self.assertEqual(payment.amount, order.total_amount)
++        self.assertEqual(Enrollment.objects.filter(user=self.student, course=self.course).count(), 1)
++
++    def test_payment_repairs_wrong_payment_amount(self):
++        order = self.create_pending_order()
++        Payment.objects.filter(order=order).update(amount=1)
+         simulate_payment(self.student, order.number)
++        self.assertEqual(Payment.objects.get(order=order).amount, order.total_amount)
++
++    def test_other_user_cannot_probe_or_pay_order_but_admin_can(self):
++        order = self.create_pending_order()
++        with self.assertRaises(StoreError) as other_error:
++            simulate_payment(self.other, order.number)
++        self.assertEqual(other_error.exception.status, 404)
++        paid = simulate_payment(self.admin, order.number)
++        self.assertEqual(paid.status, Order.Status.PAID)
++
++    def test_cancelled_order_cannot_be_paid(self):
++        order = self.create_pending_order()
++        order.status = Order.Status.CANCELLED
++        order.save(update_fields=["status"])
+         with self.assertRaises(StoreError) as ctx:
+-            add_course(self.student, self.course.id)
++            simulate_payment(self.student, order.number)
++        self.assertEqual(ctx.exception.status, 409)
++
++    def test_second_pending_order_for_same_course_cannot_be_paid_after_first(self):
++        first = self.create_pending_order()
++        second = self.create_pending_order()
++        simulate_payment(self.student, first.number)
++        with self.assertRaises(StoreError) as ctx:
++            simulate_payment(self.student, second.number)
+         self.assertEqual(ctx.exception.status, 409)
++        second.refresh_from_db()
++        self.assertEqual(second.status, Order.Status.PENDING)
++
++    def test_inactive_enrollment_can_be_reactivated_by_new_purchase(self):
++        old_order, _, enrollment = make_paid_enrollment(self.student, self.course)
++        enrollment.is_active = False
++        enrollment.save(update_fields=["is_active"])
++        new_order = self.create_pending_order()
++        simulate_payment(self.student, new_order.number)
++        enrollment.refresh_from_db()
++        self.assertTrue(enrollment.is_active)
++        self.assertEqual(enrollment.order_item.order_id, new_order.id)
++        self.assertNotEqual(enrollment.order_item.order_id, old_order.id)
++
++
++class CouponTests(TestCase):
++    def setUp(self):
++        self.student = make_user(email="coupon@example.com", phone="09120000221")
++        self.course = make_course(code="CPN-101", slug="coupon-course", price=1_000_000)
++        now = timezone.now()
++        self.coupon = Coupon.objects.create(
++            code="SAVE20",
++            title="تخفیف تست",
++            discount_percent=20,
++            min_order_amount=500_000,
++            max_discount_amount=150_000,
++            starts_at=now - timedelta(days=1),
++            ends_at=now + timedelta(days=1),
++            usage_limit=2,
++            per_user_limit=1,
++        )
++
++    def create_order_with_coupon(self, user=None):
++        user = user or self.student
++        add_course(user, self.course.id)
++        return create_order(
++            user,
++            first_name=user.first_name,
++            last_name=user.last_name,
++            email=user.email,
++            phone=user.phone,
++            coupon_code=self.coupon.code,
++        )
++
++    def test_coupon_normalizes_code_and_applies_max_discount(self):
++        self.assertEqual(self.coupon.code, "SAVE20")
++        order = self.create_order_with_coupon()
++        self.assertEqual(order.subtotal, 1_000_000)
++        self.assertEqual(order.discount_amount, 150_000)
++        self.assertEqual(order.total_amount, 850_000)
++        self.assertTrue(CouponUsage.objects.filter(order=order, coupon=self.coupon).exists())
++
++    def test_invalid_expired_future_and_minimum_coupon_rejected(self):
++        with self.assertRaises(StoreError):
++            validate_coupon(self.student, "UNKNOWN", 1_000_000)
++        self.coupon.ends_at = timezone.now() - timedelta(seconds=1)
++        self.coupon.save(update_fields=["ends_at"])
++        with self.assertRaises(StoreError):
++            validate_coupon(self.student, self.coupon.code, 1_000_000)
++        self.coupon.ends_at = timezone.now() + timedelta(days=2)
++        self.coupon.starts_at = timezone.now() + timedelta(days=1)
++        self.coupon.save(update_fields=["starts_at", "ends_at"])
++        with self.assertRaises(StoreError):
++            validate_coupon(self.student, self.coupon.code, 1_000_000)
++        self.coupon.starts_at = timezone.now() - timedelta(days=1)
++        self.coupon.save(update_fields=["starts_at"])
++        with self.assertRaises(StoreError):
++            validate_coupon(self.student, self.coupon.code, 100)
++
++    def test_per_user_limit_is_enforced_at_payment(self):
++        first = self.create_order_with_coupon()
++        simulate_payment(self.student, first.number)
++        second_course = make_course(
++            code="CPN-202",
++            slug="coupon-second-course",
++            price=1_000_000,
++            instructor=self.course.instructor,
++        )
++        add_course(self.student, second_course.id)
++        with self.assertRaises(StoreError):
++            create_order(
++                self.student,
++                first_name=self.student.first_name,
++                last_name=self.student.last_name,
++                email=self.student.email,
++                phone=self.student.phone,
++                coupon_code=self.coupon.code,
++            )
++
++    def test_global_usage_limit_is_enforced(self):
++        users = [
++            self.student,
++            make_user(email="coupon2@example.com", phone="09120000222"),
++            make_user(email="coupon3@example.com", phone="09120000223"),
++        ]
++        courses = [
++            self.course,
++            make_course(code="CPN-302", slug="coupon-302", instructor=self.course.instructor),
++            make_course(code="CPN-303", slug="coupon-303", instructor=self.course.instructor),
++        ]
++        for user, course in zip(users[:2], courses[:2]):
++            add_course(user, course.id)
++            order = create_order(
++                user,
++                first_name=user.first_name,
++                last_name=user.last_name,
++                email=user.email,
++                phone=user.phone,
++                coupon_code=self.coupon.code,
++            )
++            simulate_payment(user, order.number)
++        add_course(users[2], courses[2].id)
++        with self.assertRaises(StoreError):
++            create_order(
++                users[2],
++                first_name=users[2].first_name,
++                last_name=users[2].last_name,
++                email=users[2].email,
++                phone=users[2].phone,
++                coupon_code=self.coupon.code,
++            )
++
++
++class StoreApiTests(TestCase):
++    def setUp(self):
++        self.client = Client()
++        self.student = make_user(email="api-buyer@example.com", phone="09120000241")
++        self.other = make_user(email="api-other@example.com", phone="09120000242")
++        self.course = make_course(code="API-ORD-101", slug="api-order-course")
++
++    def test_anonymous_store_endpoints_are_protected(self):
++        for method, path, payload in [
++            ("get", "/api/v1/store/cart", None),
++            ("post", "/api/v1/store/cart/items", {"course_id": self.course.id}),
++            ("delete", f"/api/v1/store/cart/items/{self.course.id}", None),
++            ("post", "/api/v1/store/checkout", {}),
++            ("get", "/api/v1/store/orders", None),
++        ]:
++            with self.subTest(method=method, path=path):
++                response = self.client.get(path) if method == "get" else json_request(self.client, method, path, payload)
++                self.assertIn(response.status_code, (401, 403))
++
++    def test_complete_api_cart_checkout_payment_and_order_list(self):
++        self.client.force_login(self.student)
++        added = json_request(self.client, "post", "/api/v1/store/cart/items", {"course_id": self.course.id})
++        self.assertEqual(added.status_code, 201)
++        self.assertEqual(added.json()["count"], 1)
++        cart = self.client.get("/api/v1/store/cart")
++        self.assertEqual(cart.status_code, 200)
++        self.assertEqual(cart.json()["subtotal"], self.course.price)
++        checkout = json_request(
++            self.client,
++            "post",
++            "/api/v1/store/checkout",
++            {
++                "first_name": self.student.first_name,
++                "last_name": self.student.last_name,
++                "email": self.student.email,
++                "phone": self.student.phone,
++                "coupon_code": "",
++            },
++        )
++        self.assertEqual(checkout.status_code, 201)
++        order_number = checkout.json()["order_number"]
++        payment = json_request(self.client, "post", f"/api/v1/store/orders/{order_number}/pay")
++        self.assertEqual(payment.status_code, 200)
++        self.assertEqual(payment.json()["status"], Order.Status.PAID)
++        self.assertEqual(payment.json()["redirect_url"], f"/checkout/success/{order_number}/")
++        orders = self.client.get("/api/v1/store/orders")
++        self.assertEqual(orders.status_code, 200)
++        self.assertEqual(orders.json()[0]["number"], order_number)
++
++    def test_checkout_field_validation_and_empty_cart(self):
++        self.client.force_login(self.student)
++        base = {
++            "first_name": "علی",
++            "last_name": "دانشجو",
++            "email": self.student.email,
++            "phone": self.student.phone,
++            "coupon_code": "",
++        }
++        cases = [
++            ({"first_name": "ا"}, 400),
++            ({"last_name": "ب"}, 400),
++            ({"email": "bad"}, 400),
++            ({"phone": "abc"}, 400),
++        ]
++        for changes, expected in cases:
++            with self.subTest(changes=changes):
++                response = json_request(self.client, "post", "/api/v1/store/checkout", {**base, **changes})
++                self.assertEqual(response.status_code, expected)
++        empty = json_request(self.client, "post", "/api/v1/store/checkout", base)
++        self.assertEqual(empty.status_code, 400)
++
++    def test_delete_missing_cart_item_returns_404_json(self):
++        self.client.force_login(self.student)
++        response = json_request(self.client, "delete", f"/api/v1/store/cart/items/{self.course.id}")
++        self.assertEqual(response.status_code, 404)
++        self.assertIn("detail", response.json())
++
++    def test_success_page_does_not_reveal_another_users_order(self):
++        order, _, _ = make_paid_enrollment(self.student, self.course)
++        self.client.force_login(self.other)
++        response = self.client.get(f"/checkout/success/{order.number}/")
++        self.assertEqual(response.status_code, 404)
+diff --git a/orders/views.py b/orders/views.py
+index 6c48420..7adad63 100644
+--- a/orders/views.py
++++ b/orders/views.py
+@@ -25,9 +25,10 @@ def checkout_page(request):
+ 
+ @login_required
+ def payment_success(request, order_number):
+-    order = get_object_or_404(Order.objects.select_related("payment").prefetch_related("items"), number=order_number)
+-    if order.user_id != request.user.id and not request.user.is_admin_role:
+-        return render(request, "errors/403.html", status=403)
++    orders = Order.objects.select_related("payment").prefetch_related("items")
++    if not request.user.is_admin_role:
++        orders = orders.filter(user=request.user)
++    order = get_object_or_404(orders, number=order_number)
+     if order.status != Order.Status.PAID:
+         return redirect("my_orders")
+     return render(request, "orders/success.html", {"order": order})
+diff --git a/scripts/preflight.py b/scripts/preflight.py
+index 13517b1..cba102f 100755
+--- a/scripts/preflight.py
++++ b/scripts/preflight.py
+@@ -1,15 +1,17 @@
+ #!/usr/bin/env python3
+-"""Dependency-free structural checks for the MAHDAI project.
++"""Dependency-free structural QA for the MAHDAI project.
+ 
+-Run before installing Django to catch missing files, Python syntax errors,
+-broken named template URLs, missing static assets, and JavaScript syntax issues
+-when Node.js is available.
++This script intentionally runs before Django is installed. Runtime behavior is
++covered by the Django test suite; here we catch syntax, route, template, static,
++JavaScript, database-integrity and known authentication-configuration mistakes.
+ """
+ from __future__ import annotations
+ 
++import ast
+ import compileall
+ import re
+ import shutil
++import sqlite3
+ import subprocess
+ import sys
+ from pathlib import Path
+@@ -23,12 +25,15 @@ REQUIRED = [
+     "config/urls.py",
+     "config/api.py",
+     "accounts/models.py",
++    "accounts/security.py",
++    "accounts/checks.py",
+     "catalog/models.py",
+     "orders/models.py",
+     "orders/services.py",
+     "templates/base.html",
+     "static/css/app.css",
+ ]
++SOURCE_SUFFIXES = {".py", ".html", ".js", ".css", ".md", ".sh", ".bat"}
+ 
+ 
+ def fail(message: str) -> None:
+@@ -44,9 +49,10 @@ def check_required_files() -> None:
+ 
+ 
+ def check_python_syntax() -> None:
+-    folders = ["accounts", "catalog", "config", "core", "dashboard", "orders"]
++    folders = ["accounts", "catalog", "config", "core", "dashboard", "orders", "scripts"]
+     ok = all(compileall.compile_dir(ROOT / folder, quiet=1) for folder in folders)
+-    ok = compileall.compile_file(ROOT / "manage.py", quiet=1) and ok
++    for file_name in ("manage.py", "tests_support.py"):
++        ok = compileall.compile_file(ROOT / file_name, quiet=1) and ok
+     if not ok:
+         fail("Python syntax check failed")
+     print("[OK] Python syntax")
+@@ -86,6 +92,19 @@ def check_static_references() -> None:
+     print(f"[OK] Static references: {count}")
+ 
+ 
++def check_duplicate_template_ids() -> None:
++    id_pattern = re.compile(r'\bid\s*=\s*["\']([^"\']+)["\']')
++    problems: list[str] = []
++    for path in (ROOT / "templates").rglob("*.html"):
++        ids = id_pattern.findall(path.read_text(encoding="utf-8"))
++        duplicates = sorted({item for item in ids if ids.count(item) > 1})
++        if duplicates:
++            problems.append(f"{path.relative_to(ROOT)}: {', '.join(duplicates)}")
++    if problems:
++        fail("Duplicate HTML ids: " + "; ".join(problems))
++    print("[OK] Template id uniqueness")
++
++
+ def check_javascript() -> None:
+     node = shutil.which("node")
+     files = sorted((ROOT / "static" / "js").glob("*.js"))
+@@ -99,12 +118,224 @@ def check_javascript() -> None:
+     print(f"[OK] JavaScript syntax: {len(files)} files")
+ 
+ 
++def _router_prefixes() -> dict[str, str]:
++    source = (ROOT / "config" / "api.py").read_text(encoding="utf-8")
++    pattern = re.compile(
++        r'api\.add_router\(\s*["\']([^"\']+)["\']\s*,\s*["\']([^."\']+)\.api\.router["\']'
++    )
++    return {app: prefix for prefix, app in pattern.findall(source)}
++
++
++def _api_patterns() -> list[re.Pattern[str]]:
++    patterns: list[re.Pattern[str]] = []
++    for app, prefix in _router_prefixes().items():
++        path = ROOT / app / "api.py"
++        if not path.exists():
++            fail(f"Router module missing: {app}.api")
++        tree = ast.parse(path.read_text(encoding="utf-8"))
++        for node in tree.body:
++            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
++                continue
++            for decorator in node.decorator_list:
++                if not isinstance(decorator, ast.Call) or not decorator.args:
++                    continue
++                func = decorator.func
++                if not (
++                    isinstance(func, ast.Attribute)
++                    and isinstance(func.value, ast.Name)
++                    and func.value.id == "router"
++                    and func.attr in {"get", "post", "put", "patch", "delete"}
++                ):
++                    continue
++                if not isinstance(decorator.args[0], ast.Constant):
++                    continue
++                route = f"/api{prefix}{decorator.args[0].value}"
++                escaped = re.escape(route)
++                escaped = re.sub(r"\\\{[^}]+\\\}", r"[^/]+", escaped)
++                patterns.append(re.compile(f"^{escaped}/?$"))
++    return patterns
++
++
++def check_frontend_api_routes() -> None:
++    route_patterns = _api_patterns()
++    call_pattern = re.compile(r'(?:apiFetch|fetch)\(\s*[`"\'](/api/[^`"\']+)[`"\']')
++    missing: list[str] = []
++    checked = 0
++    for path in sorted((ROOT / "static" / "js").glob("*.js")):
++        source = path.read_text(encoding="utf-8")
++        for endpoint in call_pattern.findall(source):
++            checked += 1
++            normalized = re.sub(r"\$\{[^}]+\}", "value", endpoint)
++            if not any(pattern.match(normalized) for pattern in route_patterns):
++                missing.append(f"{path.name}: {endpoint}")
++    if missing:
++        fail("Frontend API calls without backend route: " + "; ".join(missing))
++    print(f"[OK] Frontend/backend API route alignment: {checked} calls")
++
++
++def check_ninja_status_schemas() -> None:
++    problems: list[str] = []
++    for path in ROOT.glob("*/api.py"):
++        source = path.read_text(encoding="utf-8")
++        tree = ast.parse(source)
++        for node in tree.body:
++            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
++                continue
++            returns_status = any(
++                isinstance(child, ast.Call)
++                and isinstance(child.func, ast.Name)
++                and child.func.id == "Status"
++                for child in ast.walk(node)
++            )
++            if not returns_status:
++                continue
++            route_decorators = [
++                dec
++                for dec in node.decorator_list
++                if isinstance(dec, ast.Call)
++                and isinstance(dec.func, ast.Attribute)
++                and isinstance(dec.func.value, ast.Name)
++                and dec.func.value.id == "router"
++            ]
++            has_response = any(
++                any(keyword.arg == "response" for keyword in dec.keywords)
++                for dec in route_decorators
++            )
++            if not has_response:
++                problems.append(f"{path.relative_to(ROOT)}:{node.lineno} {node.name}")
++    if problems:
++        fail("Ninja Status responses without response schema: " + "; ".join(problems))
++    print("[OK] Django Ninja response schemas")
++
++
++def check_role_auth_structure() -> None:
++    path = ROOT / "accounts" / "security.py"
++    tree = ast.parse(path.read_text(encoding="utf-8"))
++    auth_class = next(
++        (
++            node
++            for node in tree.body
++            if isinstance(node, ast.ClassDef) and node.name == "RoleSessionAuth"
++        ),
++        None,
++    )
++    if auth_class is None:
++        fail("RoleSessionAuth class is missing")
++    init = next((node for node in auth_class.body if isinstance(node, ast.FunctionDef) and node.name == "__init__"), None)
++    authenticate = next((node for node in auth_class.body if isinstance(node, ast.FunctionDef) and node.name == "authenticate"), None)
++    if init is None or not any(
++        isinstance(node, ast.Call)
++        and isinstance(node.func, ast.Attribute)
++        and node.func.attr == "__init__"
++        and isinstance(node.func.value, ast.Call)
++        and isinstance(node.func.value.func, ast.Name)
++        and node.func.value.func.id == "super"
++        for node in ast.walk(init)
++    ):
++        fail("RoleSessionAuth.__init__ must call super().__init__")
++    arg_names = [arg.arg for arg in authenticate.args.args] if authenticate else []
++    if arg_names[:3] != ["self", "request", "key"]:
++        fail("RoleSessionAuth.authenticate must accept (self, request, key)")
++    print("[OK] RoleSessionAuth parent initialization and signature")
++
++
++def check_sqlite_integrity() -> None:
++    database = ROOT / "db.sqlite3"
++    if not database.exists():
++        print("[SKIP] db.sqlite3 not present")
++        return
++    connection = sqlite3.connect(database)
++    try:
++        integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
++        foreign_keys = connection.execute("PRAGMA foreign_key_check").fetchall()
++    finally:
++        connection.close()
++    if integrity != "ok":
++        fail(f"SQLite integrity_check: {integrity}")
++    if foreign_keys:
++        fail(f"SQLite foreign-key violations: {foreign_keys[:5]}")
++
++    connection = sqlite3.connect(database)
++    try:
++        tables = {
++            row[0]
++            for row in connection.execute(
++                "SELECT name FROM sqlite_master WHERE type='table'"
++            )
++        }
++        required_tables = {
++            "orders_order",
++            "orders_orderitem",
++            "orders_payment",
++            "orders_enrollment",
++        }
++        if required_tables.issubset(tables):
++            invalid_totals = connection.execute(
++                "SELECT number FROM orders_order "
++                "WHERE discount_amount > subtotal "
++                "OR total_amount != subtotal - discount_amount"
++            ).fetchall()
++            invalid_paid = connection.execute(
++                "SELECT o.number FROM orders_order o "
++                "LEFT JOIN orders_payment p ON p.order_id = o.id "
++                "WHERE o.status = 'PAID' "
++                "AND (p.id IS NULL OR p.status != 'SUCCESS' OR p.amount != o.total_amount)"
++            ).fetchall()
++            invalid_success = connection.execute(
++                "SELECT o.number FROM orders_payment p "
++                "JOIN orders_order o ON o.id = p.order_id "
++                "WHERE p.status = 'SUCCESS' AND o.status != 'PAID'"
++            ).fetchall()
++            invalid_enrollments = connection.execute(
++                "SELECT e.id FROM orders_enrollment e "
++                "JOIN orders_orderitem i ON i.id = e.order_item_id "
++                "JOIN orders_order o ON o.id = i.order_id "
++                "WHERE e.is_active = 1 "
++                "AND (e.course_id != i.course_id OR e.user_id != o.user_id OR o.status != 'PAID')"
++            ).fetchall()
++            problems = invalid_totals + invalid_paid + invalid_success + invalid_enrollments
++            if problems:
++                fail(
++                    "SQLite business invariants failed: "
++                    f"totals={invalid_totals[:3]}, paid={invalid_paid[:3]}, "
++                    f"success={invalid_success[:3]}, enrollments={invalid_enrollments[:3]}"
++                )
++    finally:
++        connection.close()
++    print("[OK] SQLite integrity, foreign keys and business invariants")
++
++
++def check_no_machine_specific_paths() -> None:
++    pattern = re.compile(r"/home/[^/]+/(?:project_web|Code)/")
++    problems: list[str] = []
++    for path in ROOT.rglob("*"):
++        if not path.is_file() or path.suffix not in SOURCE_SUFFIXES:
++            continue
++        if any(part in {"legacy_frontend", ".git", ".venv", "__pycache__"} for part in path.parts):
++            continue
++        try:
++            text = path.read_text(encoding="utf-8")
++        except UnicodeDecodeError:
++            continue
++        if pattern.search(text):
++            problems.append(str(path.relative_to(ROOT)))
++    if problems:
++        fail("Machine-specific absolute paths found: " + ", ".join(problems))
++    print("[OK] No machine-specific source paths")
++
++
+ def main() -> int:
+     check_required_files()
+     check_python_syntax()
+     check_template_urls()
+     check_static_references()
++    check_duplicate_template_ids()
+     check_javascript()
++    check_frontend_api_routes()
++    check_ninja_status_schemas()
++    check_role_auth_structure()
++    check_sqlite_integrity()
++    check_no_machine_specific_paths()
+     print("Preflight completed successfully.")
+     return 0
+ 
+diff --git a/scripts/qa_all.bat b/scripts/qa_all.bat
+new file mode 100644
+index 0000000..517b716
+--- /dev/null
++++ b/scripts/qa_all.bat
+@@ -0,0 +1,7 @@
++@echo off
++setlocal
++python scripts\preflight.py || exit /b 1
++python manage.py check || exit /b 1
++python manage.py makemigrations --check --dry-run || exit /b 1
++python manage.py test accounts catalog orders core dashboard --verbosity 2 || exit /b 1
++echo All MAHDAI QA checks passed.
+diff --git a/scripts/qa_all.sh b/scripts/qa_all.sh
+new file mode 100755
+index 0000000..fd14405
+--- /dev/null
++++ b/scripts/qa_all.sh
+@@ -0,0 +1,11 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++PYTHON_BIN="${PYTHON_BIN:-python}"
++
++"$PYTHON_BIN" scripts/preflight.py
++"$PYTHON_BIN" manage.py check
++"$PYTHON_BIN" manage.py makemigrations --check --dry-run
++"$PYTHON_BIN" manage.py test accounts catalog orders core dashboard --verbosity 2
++
++echo "All MAHDAI QA checks passed."
+diff --git a/start.sh b/start.sh
+index 90fb7e3..7da1501 100755
+--- a/start.sh
++++ b/start.sh
+@@ -6,4 +6,6 @@ if [ ! -x .venv/bin/python ]; then
+   exit 1
+ fi
+ 
+-exec .venv/bin/python manage.py runserver 127.0.0.1:8000
++HOST="${HOST:-127.0.0.1}"
++PORT="${PORT:-8000}"
++exec .venv/bin/python manage.py runserver "${HOST}:${PORT}"
+diff --git a/start_windows.bat b/start_windows.bat
+index 912c991..eea40bc 100644
+--- a/start_windows.bat
++++ b/start_windows.bat
+@@ -1,3 +1,9 @@
+ @echo off
+-call .venv\Scripts\activate.bat
+-python manage.py runserver 127.0.0.1:8000
++setlocal
++if not exist .venv\Scripts\python.exe (
++  echo Virtual environment not found. Run setup_windows.bat first.
++  exit /b 1
++)
++set PORT=%1
++if "%PORT%"=="" set PORT=8000
++.venv\Scripts\python.exe manage.py runserver 127.0.0.1:%PORT%
+diff --git a/templates/accounts/auth.html b/templates/accounts/auth.html
+index 79c45c0..3cce7d5 100644
+--- a/templates/accounts/auth.html
++++ b/templates/accounts/auth.html
+@@ -22,8 +22,8 @@
+         {% csrf_token %}
+         <div class="form-grid two"><label>نام<input name="first_name" required maxlength="80"></label><label>نام خانوادگی<input name="last_name" required maxlength="100"></label></div>
+         <label>ایمیل<input name="email" type="email" autocomplete="email" required></label>
+-        <label>شماره موبایل<input name="phone" type="tel" inputmode="numeric" required placeholder="09123456789"></label>
+-        <div class="form-grid two"><label>رمز عبور<input name="password" type="password" autocomplete="new-password" required minlength="8"></label><label>تکرار رمز<input name="password_confirm" type="password" autocomplete="new-password" required minlength="8"></label></div>
++        <label>شماره موبایل<input name="phone" type="tel" inputmode="numeric" required minlength="10" maxlength="15" placeholder="09123456789"></label>
++        <div class="form-grid two"><label>رمز عبور<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>تکرار رمز<input name="password_confirm" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label></div>
+         <small class="form-hint">رمز مناسب حداقل ۸ نویسه دارد و صرفاً عددی یا بسیار ساده نیست.</small>
+         <button class="btn btn-primary btn-block" type="submit">ساخت حساب دانشجویی</button>
+       </form>
+diff --git a/templates/core/contact.html b/templates/core/contact.html
+index f5346bf..ffe93e8 100644
+--- a/templates/core/contact.html
++++ b/templates/core/contact.html
+@@ -6,8 +6,8 @@
+ <section class="section"><div class="container contact-grid">
+   <form id="contact-form" class="content-card form-card">
+     {% csrf_token %}<h2>ارسال پیام</h2>
+-    <div class="form-grid two"><label>نام و نام خانوادگی<input name="name" value="{% if request.user.is_authenticated %}{{ request.user.full_name }}{% endif %}" required></label><label>ایمیل<input name="email" type="email" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required></label></div>
+-    <label>موضوع<input name="subject" required maxlength="200"></label><label>متن پیام<textarea name="message" rows="7" required minlength="10"></textarea></label>
++    <div class="form-grid two"><label>نام و نام خانوادگی<input name="name" minlength="2" maxlength="160" value="{% if request.user.is_authenticated %}{{ request.user.full_name }}{% endif %}" required></label><label>ایمیل<input name="email" type="email" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required></label></div>
++    <label>موضوع<input name="subject" required maxlength="200"></label><label>متن پیام<textarea name="message" rows="7" required minlength="10" maxlength="5000"></textarea></label>
+     <button class="btn btn-primary" type="submit">ثبت پیام</button><div id="contact-error" class="form-error" hidden></div>
+   </form>
+   <aside class="contact-info"><article><span>✉</span><div><h3>ایمیل</h3><p>info@mahdai.ir</p></div></article><article><span>☎</span><div><h3>تلفن</h3><p>۰۲۱-۱۲۳۴۵۶۷۸</p></div></article><article><span>⌂</span><div><h3>ساعت پاسخ‌گویی</h3><p>شنبه تا چهارشنبه، ۹ تا ۱۷</p></div></article><div class="content-card"><h3>وضعیت پیام در پنل مدیر</h3><p>هر پیام با وضعیت «جدید» ثبت می‌شود و مدیر می‌تواند آن را به «خوانده‌شده» یا «پاسخ‌داده‌شده» تغییر دهد.</p></div></aside>
+diff --git a/templates/orders/checkout.html b/templates/orders/checkout.html
+index 2d005f0..680fa0f 100644
+--- a/templates/orders/checkout.html
++++ b/templates/orders/checkout.html
+@@ -7,8 +7,8 @@
+   <form id="checkout-form" class="content-card form-card">
+     {% csrf_token %}
+     <h2>اطلاعات خریدار</h2>
+-    <div class="form-grid two"><label>نام<input name="first_name" value="{{ request.user.first_name }}" required></label><label>نام خانوادگی<input name="last_name" value="{{ request.user.last_name }}" required></label></div>
+-    <div class="form-grid two"><label>ایمیل<input name="email" type="email" value="{{ request.user.email }}" required></label><label>شماره موبایل<input name="phone" value="{{ request.user.phone|default:'' }}" required></label></div>
++    <div class="form-grid two"><label>نام<input name="first_name" minlength="2" maxlength="80" value="{{ request.user.first_name }}" required></label><label>نام خانوادگی<input name="last_name" minlength="2" maxlength="100" value="{{ request.user.last_name }}" required></label></div>
++    <div class="form-grid two"><label>ایمیل<input name="email" type="email" value="{{ request.user.email }}" required></label><label>شماره موبایل<input name="phone" minlength="10" maxlength="15" inputmode="numeric" value="{{ request.user.phone|default:'' }}" required></label></div>
+     <label>کد تخفیف (اختیاری)<input name="coupon_code" autocomplete="off" placeholder="مثلاً AI20"></label>
+     <div class="simulation-note"><strong>پرداخت آزمایشی</strong><p>هیچ اتصال بانکی وجود ندارد؛ اما سفارش، پرداخت، کد پیگیری و دسترسی دوره واقعاً در SQLite ذخیره می‌شوند.</p></div>
+     <button class="btn btn-primary btn-large btn-block" type="submit">ثبت سفارش و پرداخت آزمایشی</button>
+diff --git a/tests_support.py b/tests_support.py
+new file mode 100644
+index 0000000..ace809b
+--- /dev/null
++++ b/tests_support.py
+@@ -0,0 +1,94 @@
++import json
++import zlib
++
++from django.test import Client
++
++from accounts.models import User
++from catalog.models import Category, Course
++from orders.models import Enrollment, Order, OrderItem, Payment
++
++DEFAULT_PASSWORD = "StrongPass123!"
++
++
++def make_user(*, email, phone, role=User.Role.STUDENT, password=DEFAULT_PASSWORD, **extra):
++    defaults = {
++        "first_name": extra.pop("first_name", "کاربر"),
++        "last_name": extra.pop("last_name", "آزمایشی"),
++        "phone": phone,
++        "role": role,
++        **extra,
++    }
++    return User.objects.create_user(email=email, password=password, **defaults)
++
++
++def make_course(*, code="AI-TEST-101", slug="ai-test", price=1_000_000, active=True, instructor=None):
++    if instructor is None:
++        instructor = make_user(
++            email=f"teacher-{code.lower()}@example.com",
++            phone=f"09{zlib.crc32(code.encode('utf-8')) % 10**9:09d}",
++            role=User.Role.INSTRUCTOR,
++            first_name="مدرس",
++            last_name="آزمایشی",
++        )
++    category, _ = Category.objects.get_or_create(
++        slug="test-category",
++        defaults={"name": "دسته آزمایشی", "is_active": True},
++    )
++    return Course.objects.create(
++        code=code,
++        title=f"دوره {code}",
++        slug=slug,
++        category=category,
++        instructor=instructor,
++        short_description="توضیح کوتاه معتبر برای دوره آزمایشی",
++        description="توضیحات کامل دوره آزمایشی",
++        price=price,
++        is_active=active,
++    )
++
++
++def make_paid_enrollment(user, course, *, number=None, price=None):
++    amount = course.price if price is None else price
++    order = Order.objects.create(
++        number=number or "",
++        user=user,
++        status=Order.Status.PAID,
++        subtotal=amount,
++        discount_amount=0,
++        total_amount=amount,
++        customer_first_name=user.first_name,
++        customer_last_name=user.last_name,
++        customer_email=user.email,
++        customer_phone=user.phone or "09120000000",
++    )
++    item = OrderItem.objects.create(
++        order=order,
++        course=course,
++        course_code=course.code,
++        course_title=course.title,
++        unit_price=amount,
++    )
++    Payment.objects.create(
++        order=order,
++        amount=amount,
++        status=Payment.Status.SUCCESS,
++        reference_code=f"SIM-TEST-{order.pk}",
++    )
++    enrollment = Enrollment.objects.create(user=user, course=course, order_item=item)
++    return order, item, enrollment
++
++
++def json_request(client: Client, method: str, path: str, payload=None, *, csrf_token=None):
++    kwargs = {
++        "data": json.dumps(payload if payload is not None else {}),
++        "content_type": "application/json",
++    }
++    if csrf_token:
++        kwargs["HTTP_X_CSRFTOKEN"] = csrf_token
++    return getattr(client, method.lower())(path, **kwargs)
++
++
++def csrf_token(client: Client, path="/"):
++    response = client.get(path)
++    assert response.status_code < 500, response.status_code
++    return client.cookies["csrftoken"].value

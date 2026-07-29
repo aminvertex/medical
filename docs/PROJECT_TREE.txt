@@ -1,0 +1,204 @@
+.env.example
+.gitignore
+.vscode/
+accounts/
+catalog/
+config/
+core/
+dashboard/
+docs/
+legacy_frontend/
+Makefile
+manage.py
+media/
+orders/
+README.md
+requirements.txt
+scripts/
+setup.sh
+setup_windows.bat
+start.sh
+start_windows.bat
+static/
+templates/
+tests/
+    launch.json
+    __init__.py
+    admin.py
+    api.py
+    apps.py
+    management/
+    migrations/
+    models.py
+    security.py
+    tests.py
+    urls.py
+    views.py
+    __init__.py
+    admin.py
+    api.py
+    apps.py
+    migrations/
+    models.py
+    templatetags/
+    tests.py
+    urls.py
+    views.py
+    __init__.py
+    api.py
+    asgi.py
+    settings.py
+    urls.py
+    wsgi.py
+    __init__.py
+    admin.py
+    api.py
+    apps.py
+    context_processors.py
+    migrations/
+    models.py
+    urls.py
+    views.py
+    __init__.py
+    admin.py
+    api.py
+    apps.py
+    models.py
+    urls.py
+    views.py
+    ARCHITECTURE_FA.md
+    FRONTEND_REVIEW_FA.md
+    PRESENTATION_GUIDE_FA.md
+    QA_REPORT_FA.md
+    ROUTES_FA.md
+    asset/
+    components/
+    css/
+    JS/
+    pages/
+    courses/
+    __init__.py
+    admin.py
+    api.py
+    apps.py
+    migrations/
+    models.py
+    services.py
+    tests.py
+    urls.py
+    views.py
+    preflight.py
+    assets/
+    css/
+    js/
+    accounts/
+    base.html
+    catalog/
+    core/
+    dashboard/
+    errors/
+    includes/
+    instructor/
+    orders/
+        __init__.py
+        commands/
+        0001_initial.py
+        __init__.py
+        0001_initial.py
+        __init__.py
+        __init__.py
+        catalog_tags.py
+        0001_initial.py
+        __init__.py
+        dad.png
+        images (1).jpg
+        logonomy-1763455510995.jpeg
+        logonomy-1763455510995.png
+        mas.png
+        sakg.png
+        yad.png
+        مهندس-محمد-رضایی-وب-سایت.jpg
+        ui.css
+        about-us.css
+        auth.css
+        cart.css
+        checkout.css
+        contact.css
+        header&footer.css
+        index.css
+        light.css
+        product.css
+        shop.css
+        success.css
+        team.css
+        header.js
+        about-us.html
+        auth.html
+        cart.html
+        checkout.HTML
+        contact-us.html
+        index.html
+        product.html
+        shop.html
+        success.html
+        team.html
+        .gitkeep
+        0001_initial.py
+        __init__.py
+        dad.png
+        images (1).jpg
+        logonomy-1763455510995.jpeg
+        logonomy-1763455510995.png
+        mas.png
+        sakg.png
+        yad.png
+        مهندس-محمد-رضایی-وب-سایت.jpg
+        about-us.css
+        app.css
+        auth.css
+        cart.css
+        checkout.css
+        contact.css
+        header&footer.css
+        index.css
+        light.css
+        product.css
+        shop.css
+        success.css
+        team.css
+        app.js
+        auth.js
+        cart.js
+        checkout.js
+        contact.js
+        course.js
+        dashboard.js
+        legacy-header.js
+        account.html
+        auth.html
+        my_courses.html
+        my_favorites.html
+        my_orders.html
+        course_detail.html
+        shop.html
+        about.html
+        contact.html
+        home.html
+        team.html
+        base_dashboard.html
+        courses.html
+        index.html
+        messages.html
+        orders.html
+        users.html
+        403.html
+        404.html
+        course_card.html
+        footer.html
+        header.html
+        dashboard.html
+        cart.html
+        checkout.html
+        success.html
+            __init__.py
+            seed_demo_data.py

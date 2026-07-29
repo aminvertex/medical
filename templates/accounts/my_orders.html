@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% load catalog_tags %}
+{% block title %}سفارش‌های من | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><span class="eyebrow">حساب کاربری</span><h1>سفارش‌های من</h1></div></section>
+<section class="section"><div class="container narrow-container">
+  <div class="order-list">{% for order in orders %}<article class="order-card"><div class="order-head"><div><strong>{{ order.number }}</strong><small>{{ order.created_at|date:'Y/m/d - H:i' }}</small></div><span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span></div><ul>{% for item in order.items.all %}<li><span>{{ item.course_title }} <small>{{ item.course_code }}</small></span><b>{{ item.unit_price|toman }}</b></li>{% endfor %}</ul><div class="order-total"><span>تخفیف: {{ order.discount_amount|toman }}</span><strong>مبلغ نهایی: {{ order.total_amount|toman }}</strong></div>{% if order.payment.reference_code %}<div class="reference">کد پیگیری پرداخت: {{ order.payment.reference_code }}</div>{% endif %}{% if order.status == 'PENDING' %}<button class="btn btn-primary btn-small" type="button" data-pay-order="{{ order.number }}">تلاش مجدد برای پرداخت</button>{% endif %}</article>{% empty %}<div class="empty-state"><h3>سفارشی وجود ندارد</h3><a class="btn btn-primary" href="{% url 'shop' %}">رفتن به فروشگاه</a></div>{% endfor %}</div>
+</div></section>
+{% endblock %}

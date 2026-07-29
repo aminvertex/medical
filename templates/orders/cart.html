@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static catalog_tags %}
+{% block title %}سبد خرید | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><span class="eyebrow">مرحله اول خرید</span><h1>سبد خرید شما</h1><p>برای دوره دیجیتال تعداد همیشه یک است و یک دوره دوبار خریداری نمی‌شود.</p></div></section>
+<section class="section"><div class="container checkout-layout">
+  <div class="content-card">
+    <h2>دوره‌های انتخاب‌شده</h2>
+    <div id="cart-items" class="cart-list">
+      {% for item in cart_items %}
+      <article class="cart-item" data-cart-course="{{ item.course_id }}"><img src="{{ item.course.image_url }}" alt="{{ item.course.title }}"><div class="cart-item-info"><span>{{ item.course.category.name }}</span><h3><a href="{{ item.course.get_absolute_url }}">{{ item.course.title }}</a></h3><small>کد: {{ item.course.code }}</small></div><strong>{{ item.course.price|toman }}</strong><button class="remove-button" type="button" data-remove-course="{{ item.course_id }}">حذف</button></article>
+      {% empty %}<div class="empty-state"><h3>سبد خرید خالی است</h3><p>دوره مورد نظر خود را از فروشگاه انتخاب کنید.</p><a class="btn btn-primary" href="{% url 'shop' %}">مشاهده فروشگاه</a></div>{% endfor %}
+    </div>
+  </div>
+  <aside class="side-card order-summary"><h2>خلاصه خرید</h2><div><span>تعداد دوره‌ها</span><b id="summary-count">{{ cart_items|length }}</b></div><div><span>جمع اولیه</span><b id="summary-subtotal">{{ subtotal|toman }}</b></div><hr><div class="summary-total"><span>مبلغ قابل پرداخت</span><strong id="summary-total">{{ subtotal|toman }}</strong></div>{% if cart_items %}<a class="btn btn-primary btn-block btn-large" href="{% url 'checkout' %}">ادامه و ثبت سفارش</a>{% endif %}<a class="btn btn-ghost btn-block" href="{% url 'shop' %}">ادامه خرید</a></aside>
+</div></section>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/cart.js' %}" defer></script>{% endblock %}

@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="آکادمی تخصصی آموزش هوش مصنوعی MAHDAI">
+  <title>{% block title %}MAHDAI{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'assets/logonomy-1763455510995.png' %}">
+  <link rel="shortcut icon" type="image/png" href="{% static 'assets/logonomy-1763455510995.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body data-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}">
+  {% include 'includes/header.html' %}
+  <main>{% block content %}{% endblock %}</main>
+  {% include 'includes/footer.html' %}
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

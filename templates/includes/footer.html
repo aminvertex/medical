@@ -1,0 +1,39 @@
+{% load static %}
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <section>
+      <div class="brand footer-brand">
+        <img src="{% static 'assets/logonomy-1763455510995.png' %}" alt="MAHDAI">
+        <span>MAHDAI</span>
+      </div>
+      <p>آموزش پروژه‌محور هوش مصنوعی، یادگیری ماشین و علوم داده برای ساختن مهارت‌های واقعی.</p>
+    </section>
+    <section>
+      <h3>دسترسی سریع</h3>
+      <a href="{% url 'shop' %}">همه دوره‌ها</a>
+      <a href="{% url 'about' %}">درباره آکادمی</a>
+      <a href="{% url 'contact' %}">پشتیبانی</a>
+      <a href="/api/docs">مستندات API</a>
+    </section>
+    <section>
+      <h3>حساب کاربری</h3>
+      {% if request.user.is_authenticated %}
+        <a href="{% url 'my_courses' %}">دوره‌های من</a>
+        <a href="{% url 'my_orders' %}">سفارش‌های من</a>
+        <a href="{% url 'my_favorites' %}">علاقه‌مندی‌ها</a>
+      {% else %}
+        <a href="{% url 'auth_page' %}">ورود یا ساخت حساب</a>
+      {% endif %}
+    </section>
+    <section>
+      <h3>عضویت در خبرنامه</h3>
+      <p>خبر دوره‌های جدید و تخفیف‌ها را دریافت کنید.</p>
+      <form id="newsletter-form" class="newsletter-form">
+        {% csrf_token %}
+        <input name="email" type="email" placeholder="ایمیل شما" required>
+        <button class="btn btn-primary" type="submit">عضویت</button>
+      </form>
+    </section>
+  </div>
+  <div class="footer-bottom">© {% now "Y" %} MAHDAI — پروژه دانشگاهی فروشگاه دوره‌های هوش مصنوعی</div>
+</footer>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAHDAI - آموزش هوش مصنوعی</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/index.css" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+  <script src="/JS/header.js"></script>
+</head>
+<body class="light">
+
+<!-- 🌟 Header -->
+<header class="ai-header">
+  <div class="container header-container">
+    <div class="logo">
+      <img src="/asset/logonomy-1763455510995.png" alt="لوگو" />
+      <span>MAHDAI</span>
+    </div>
+
+    <!-- دکمه همبرگری -->
+    <button class="hamburger" aria-label="منوی ناوبری">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- منوی اصلی -->
+    <nav class="nav" id="mainNav">
+      <a href="./index.html">خانه</a>
+      <a href="./shop.html">فروشگاه</a>
+      <a href="./contact-us.html">تماس با ما</a>
+      <a href="./team.html">اعضای تیم ما</a>
+      <a href="./about-us.html">درباره ما</a>
+    </nav>
+
+    <div class="badge-wrapper">
+        <a href="/pages/checkout.HTML">
+      <span class="material-symbols-outlined img-icon">shopping_bag</span></a>
+      <span id="cart-badge" class="badge-large">0</span>
+      <button class="btn-primary">      <a href="/pages/auth.html">ورود / ثبت‌نام</a>
+</button>
+    </div>
+  </div>
+
+  <!-- Overlay منوی موبایل -->
+  <div class="mobile-menu-overlay" id="mobileMenu">
+    <button class="close-btn" aria-label="بستن منو">&times;</button>
+    <a href="./index.html">خانه</a>
+    <a href="./shop.html">فروشگاه</a>
+    <a href="./contact-us.html">تماس با ما</a>
+    <a href="./team.html">اعضای تیم ما</a>
+    <a href="./about-us.html">درباره ما</a>
+  </div>
+</header>
+
+<!-- 🌟 Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <h1>دوره‌های تخصصی هوش مصنوعی و یادگیری ماشین</h1>
+      <p>با مدرسین حرفه‌ای یادگیری عمیق، یادگیری ماشین و ChatGPT را به‌صورت عملی یاد بگیرید.</p>
+      <button class="btn-primary big">مشاهده همه دوره‌ها</button>
+    </div>
+  </div>
+</section>
+
+<!-- 🌟 Stats -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number">۵٬۲۰۰+</div>
+        <div class="stat-label">دانشجوی فعال</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">۹۸%</div>
+        <div class="stat-label">رضایت دانشجویان</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">۴۲</div>
+        <div class="stat-label">دوره تخصصی</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 🌟 Courses / Products -->
+<section class="courses">
+  <div class="container">
+    <h2 class="section-title">دوره‌های پرفروش</h2>
+    <div class="course-grid">
+      <!-- Card 1 -->
+      <div class="course-card">
+        <div class="favorite-btn">
+          <span class="material-icons-outlined">favorite_border</span>
+        </div>
+        <img src="/asset/mas.png" alt="دوره یادگیری ماشین" />
+        <div class="card-body">
+          <h3>یادگیری ماشین (Machine Learning)</h3>
+          <p>آموزش مفاهیم پایه و الگوریتم‌های پرکاربرد یادگیری ماشین با پروژه‌های واقعی.</p>
+          <div class="price">۲٬۴۹۰٬۰۰۰ تومان</div>
+          <button class="btn-primary add-to-cart">افزودن به سبد خرید</button>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="course-card">
+        <div class="favorite-btn">
+          <span class="material-icons-outlined">favorite_border</span>
+        </div>
+        <img src="/asset/yad.png" alt="دوره یادگیری عمیق" />
+        <div class="card-body">
+          <h3>یادگیری عمیق (Deep Learning)</h3>
+          <p>آموزش شبکه‌های عصبی و CNN، RNN، با TensorFlow و PyTorch.</p>
+          <div class="price">۲٬۹۹۰٬۰۰۰ تومان</div>
+          <button class="btn-primary add-to-cart">افزودن به سبد خرید</button>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="course-card">
+        <div class="favorite-btn">
+          <span class="material-icons-outlined">favorite_border</span>
+        </div>
+        <img src="/asset/sakg.png" alt="دوره ChatGPT" />
+        <div class="card-body">
+          <h3>ساخت چت‌بات با ChatGPT API</h3>
+          <p>یادگیری نحوه ساخت چت‌بات‌های هوشمند با OpenAI و کاربرد آن در پروژه‌ها.</p>
+          <div class="price">۱٬۹۹۰٬۰۰۰ تومان</div>
+          <button class="btn-primary add-to-cart">افزودن به سبد خرید</button>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="course-card">
+        <div class="favorite-btn">
+          <span class="material-icons-outlined">favorite_border</span>
+        </div>
+        <img src="/asset/dad.png" alt="دوره داده کاوی" />
+        <div class="card-body">
+          <h3>داده‌کاوی و تحلیل داده</h3>
+          <p>تحلیل داده‌ها با Python، Pandas و Scikit-Learn برای پروژه‌های واقعی.</p>
+          <div class="price">۲٬۴۵۰٬۰۰۰ تومان</div>
+          <button class="btn-primary add-to-cart">افزودن به سبد خرید</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 🌟 Why Choose Us -->
+<section class="features">
+  <div class="container">
+    <h2 class="section-title">چرا دوره‌های ما را انتخاب کنید؟</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="material-icons-outlined">auto_stories</span>
+        <h3>آموزش عملی</h3>
+        <p>هر درس همراه با پروژه واقعی و کد آماده برای رزومه.</p>
+      </div>
+      <div class="feature-card">
+        <span class="material-icons-outlined">support_agent</span>
+        <h3>پشتیبانی ۲۴/۷</h3>
+        <p>پاسخگویی سریع به سوالات فنی توسط تیم مجرب.</p>
+      </div>
+      <div class="feature-card">
+        <span class="material-icons-outlined">verified</span>
+        <h3>مدرک معتبر</h3>
+        <p>دریافت گواهی دیجیتال با QR Code قابل تأیید.</p>
+      </div>
+      <div class="feature-card">
+        <span class="material-icons-outlined">update</span>
+        <h3>به‌روزرسانی رایگان</h3>
+        <p>دسترسی دائمی به آخرین نسخه‌های دوره‌ها.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 🌟 Instructors -->
+<section class="instructors">
+  <div class="container">
+    <h2 class="section-title">مدرسین برجسته ما</h2>
+    <div class="instructor-grid">
+      <div class="instructor-card">
+        <img src="/asset/images (1).jpg" alt="دکتر احمدی" />
+        <h3>دکتر احمدی</h3>
+        <p>PhD هوش مصنوعی – دانشگاه صنعتی شریف</p>
+        <div class="social-links">
+          <a href="#"><span class="material-icons-outlined">link</span></a>
+          <a href="#"><span class="material-icons-outlined">mail</span></a>
+        </div>
+      </div>
+      <div class="instructor-card">
+        <img src="/asset/مهندس-محمد-رضایی-وب-سایت.jpg" alt="مهندس رضایی" />
+        <h3>مهندس رضایی</h3>
+        <p>توسعه‌دهنده Senior در Google AI</p>
+        <div class="social-links">
+          <a href="#"><span class="material-icons-outlined">link</span></a>
+          <a href="#"><span class="material-icons-outlined">mail</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 🌟 Testimonials -->
+<section class="testimonials">
+  <div class="container">
+    <h2 class="section-title">نظرات دانشجویان ما</h2>
+    <div class="testimonial-grid">
+      <div class="testimonial-card">
+        <div class="rating">★★★★★</div>
+        <p>“دوره یادگیری ماشین فوق‌العاده بود! پروژه‌های پایانی رو مستقیم توی رزومه‌ام استفاده کردم.”</p>
+        <div class="student">— سارا، دانشجوی کارشناسی ارشد</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="rating">★★★★★</div>
+        <p>“آموزش ChatGPT API دقیقاً همون چیزی بود که نیاز داشتم. ممنون از تیم عالی MAHDAI!”</p>
+        <div class="student">— علی، توسعه‌دهنده فول‌استک</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="rating">★★★★☆</div>
+        <p>“محتوا عالی، فقط کاش فایل‌های تمرین بیشتری داشت. ولی بازم ۹ از ۱۰ می‌دم.”</p>
+        <div class="student">— محمد، محقق داده</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 🌟 Consultation CTA -->
+<section class="consult-cta">
+  <div class="container">
+    <div class="consult-box">
+      <h3>هنوز مطمئن نیستید؟</h3>
+      <p>با یکی از مشاوران آکادمی MAHDAI به صورت رایگان صحبت کنید.</p>
+      <button class="btn-primary">درخواست مشاوره</button>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer light">
+  <div class="footer-container">
+    <!-- Logo & About -->
+    <div class="footer-section footer-logo-about">
+      <h2>MAHDAI</h2>
+      <p>ما در آکادمی هوش مصنوعی MAHDAI با هدف democratize کردن علم هوش مصنوعی در میان فارسی‌زبانان فعالیت می‌کنیم.</p>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="footer-section footer-links">
+      <h3>لینک‌های سریع</h3>
+      <ul>
+        <li><a href="index.html">خانه</a></li>
+        <li><a href="./shop.html">فروشگاه</a></li>
+        <li><a href="about-us.html">درباره ما</a></li>
+        <li><a href="team.html">اعضای تیم ما</a></li>
+        <li><a href="contact-us.html">تماس با ما</a></li>
+      </ul>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="footer-section footer-newsletter">
+      <h3>عضویت در خبرنامه</h3>
+      <form>
+        <input type="email" placeholder="ایمیل خود را وارد کنید" />
+        <button type="submit" class="footer-s">ثبت</button>
+      </form>
+    </div>
+
+    <!-- Social & Contact -->
+    <div class="footer-section footer-social-contact">
+      <h3>ما را دنبال کنید</h3>
+      <div class="social-icons">
+        <a href="#"><img src="icons/facebook.svg" alt="Facebook" /></a>
+        <a href="#"><img src="icons/twitter.svg" alt="Twitter" /></a>
+        <a href="#"><img src="icons/instagram.svg" alt="Instagram" /></a>
+        <a href="#"><img src="icons/linkedin.svg" alt="LinkedIn" /></a>
+      </div>
+      <p>ایمیل: info@mahdai.ir</p>
+      <p>تلفن: ۰۹۱۲۳۴۵۶۷۸۹</p>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="footer-bottom">
+    <p>© 2026 MahdAI. تمام حقوق محفوظ است.</p>
+  </div>
+</footer>
+
+<!-- Scroll to Top -->
+<a class="fab" id="goTopBtn" href="#top" aria-label="رفتن به بالا">
+  <span class="material-icons material-symbols-outlined">arrow_upward</span>
+</a>
+
+<!-- Scripts -->
+<script>
+  // Cart
+  let cartCount = 0;
+  const badge = document.getElementById("cart-badge");
+  const buttons = document.querySelectorAll(".add-to-cart");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      cartCount++;
+      alert("محصول شما با موفقیت به سبد خرید اضافه شد.");
+      badge.textContent = cartCount;
+      badge.style.display = "inline-flex";
+    });
+  });
+
+  // Favorite
+  document.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      const icon = btn.querySelector('span');
+      icon.textContent = btn.classList.contains('active') ? 'favorite' : 'favorite_border';
+    });
+  });
+
+</script>
+
+</body>
+</html>

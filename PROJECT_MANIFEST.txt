@@ -1,0 +1,28 @@
+MAHDAI Academy - Django Ninja University Project
+
+Main stack:
+- Django 5.2.16
+- django-ninja 1.6.2
+- SQLite
+- Django Templates + Vanilla JavaScript
+- Session authentication + CSRF
+
+Public roles:
+- STUDENT
+- INSTRUCTOR
+- ADMIN
+
+Run:
+1. ./setup.sh
+2. ./start.sh
+
+Preflight:
+python scripts/preflight.py
+
+Runtime checks after dependency installation:
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test
+
+Demo accounts are documented in README.md.
+Original frontend is preserved in legacy_frontend/.

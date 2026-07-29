@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static catalog_tags %}
+{% block title %}MAHDAI | آموزش تخصصی هوش مصنوعی{% endblock %}
+{% block content %}
+<section class="hero-section">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">آکادمی پروژه‌محور هوش مصنوعی</span>
+      <h1>از یادگیری مفاهیم تا ساخت پروژه‌های واقعی AI</h1>
+      <p>دوره‌های تخصصی یادگیری ماشین، یادگیری عمیق، ChatGPT و تحلیل داده را با مدرس‌های حرفه‌ای و مسیر آموزشی ساختاریافته یاد بگیرید.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-large" href="{% url 'shop' %}">مشاهده دوره‌ها</a>
+        <a class="btn btn-outline btn-large" href="{% url 'about' %}">آشنایی با آکادمی</a>
+      </div>
+      <div class="trust-row"><span>✓ پرداخت آزمایشی امن</span><span>✓ دسترسی دائمی</span><span>✓ پشتیبانی دوره</span></div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-orb"></div>
+      <div class="code-card">
+        <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
+        <pre><code>model.fit(X_train, y_train)
+accuracy = model.score(X_test, y_test)
+print(f"AI accuracy: {accuracy:.2%}")</code></pre>
+      </div>
+      <div class="floating-card floating-a"><b>+{{ stats.enrollments }}</b><span>ثبت‌نام دوره</span></div>
+      <div class="floating-card floating-b"><b>{{ stats.average_rating|floatformat:1 }} / ۵</b><span>میانگین رضایت</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats-strip">
+  <div class="container stat-grid">
+    <div><strong>{{ stats.students }}</strong><span>دانشجوی فعال</span></div>
+    <div><strong>{{ stats.courses }}</strong><span>دوره تخصصی</span></div>
+    <div><strong>{{ stats.enrollments }}</strong><span>دسترسی صادرشده</span></div>
+    <div><strong>{{ stats.average_rating|floatformat:1 }}</strong><span>میانگین امتیاز</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-heading">
+      <div><span class="eyebrow">انتخاب دانشجویان</span><h2>دوره‌های پرفروش</h2></div>
+      <a class="text-link" href="{% url 'shop' %}">مشاهده همه دوره‌ها ←</a>
+    </div>
+    <div class="course-grid">
+      {% for course in courses %}
+        {% include 'includes/course_card.html' with course=course favorite_ids=favorite_ids|default:'' %}
+      {% empty %}
+        <div class="empty-state">هنوز دوره‌ای ثبت نشده است. دستور seed_demo_data را اجرا کنید.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section soft-section">
+  <div class="container">
+    <div class="section-heading centered"><div><span class="eyebrow">چرا MAHDAI؟</span><h2>یک تجربه آموزشی کامل</h2></div></div>
+    <div class="feature-grid">
+      <article class="feature-card"><span>🧪</span><h3>کاملاً پروژه‌محور</h3><p>هر دوره با تمرین و پروژه‌ای پایان می‌یابد که قابل استفاده در رزومه است.</p></article>
+      <article class="feature-card"><span>🧭</span><h3>مسیر یادگیری روشن</h3><p>فصل‌ها و درس‌ها به ترتیب طراحی شده‌اند تا بدون سردرگمی پیش بروید.</p></article>
+      <article class="feature-card"><span>💬</span><h3>بازخورد واقعی</h3><p>نظرات فقط توسط خریداران دوره ثبت می‌شود و مدیر آن‌ها را بررسی می‌کند.</p></article>
+      <article class="feature-card"><span>🏅</span><h3>دسترسی قابل پیگیری</h3><p>پس از پرداخت موفق، رکورد Enrollment برای دانشجو و دوره ساخته می‌شود.</p></article>
+    </div>
+  </div>
+</section>
+
+{% if instructors %}
+<section class="section">
+  <div class="container">
+    <div class="section-heading"><div><span class="eyebrow">متخصصان همراه شما</span><h2>مدرس‌های آکادمی</h2></div><a class="text-link" href="{% url 'team' %}">مشاهده تیم ←</a></div>
+    <div class="instructor-grid">
+      {% for profile in instructors %}
+      <article class="instructor-card">
+        <img src="{{ profile.avatar_url }}" alt="{{ profile.user.full_name }}">
+        <h3>{{ profile.user.full_name }}</h3>
+        <strong>{{ profile.title }}</strong>
+        <p>{{ profile.bio|truncatechars:150 }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="cta-band">
+  <div class="container cta-inner">
+    <div><span class="eyebrow light-eyebrow">آماده شروع هستید؟</span><h2>اولین پروژه هوش مصنوعی خود را بسازید.</h2></div>
+    <a class="btn btn-light btn-large" href="{% url 'shop' %}">شروع یادگیری</a>
+  </div>
+</section>
+{% endblock %}

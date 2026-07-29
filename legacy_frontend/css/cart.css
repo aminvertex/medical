@@ -1,0 +1,384 @@
+
+@import url(./light.css);
+body {
+  font-family: "Vazirmatn", sans-serif;
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  margin: 0;
+  padding: 0;
+}
+/* 🌟 Header */
+.ai-header {
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* بالاتر برای overlay */
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.8rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--md-sys-color-primary);
+}
+
+/* منوی اصلی - پیش‌فرض برای دسکتاپ */
+.nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav a {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  transition: color 0.2s;
+}
+
+.nav a:hover {
+  color: var(--md-sys-color-primary);
+}
+
+/* دکمه همبرگری */
+.hamburger {
+  display: none; /* پیش‌فرض مخفی */
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1001;
+}
+
+.hamburger span {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: var(--md-sys-color-on-surface);
+  border-radius: 2px;
+  transition: 0.3s;
+}
+
+/* Overlay منوی موبایل */
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--md-sys-color-surface);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 80px;
+  gap: 2rem;
+}
+
+.mobile-menu-overlay a {
+  text-decoration: none;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  transition: color 0.2s;
+}
+
+.mobile-menu-overlay a:hover {
+  color: var(--md-sys-color-primary);
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 2rem;
+  background: none;
+  border: none;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+}
+
+/* 🔹 CTA Button */
+.btn-primary {
+  border: none;
+  padding: 8px 16px !important;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.btn-primary:hover {
+  background: var(--md-sys-color-on-primary);
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-primary);
+}
+
+/* 📱 ریسپانسیو: موبایل (زیر 768px) */
+@media (max-width: 767px) {
+  .nav {
+    display: none; /* منوی افقی مخفی می‌شود */
+  }
+
+  .hamburger {
+    display: flex; /* دکمه همبرگر نمایش داده می‌شود */
+  }
+
+  .badge-wrapper .btn-primary,
+  .badge-wrapper .img-icon,
+  .badge-wrapper #cart-badge {
+    display: none; /* اختیاری: در موبایل آیکون سبد خرید و دکمه ورود مخفی شود */
+  }
+
+  /* اگر بخواهید badge-wrapper کوچک شود، می‌توانید جایگزین کنید */
+}
+
+/* 🖥️ دسکتاپ: همه چیز عادی */
+@media (min-width: 768px) {
+  .mobile-menu-overlay {
+    display: none !important; /* حتی اگر با JS فعال شده باشد، در دسکتاپ نشان داده نشود */
+  }
+}
+
+.cart-container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 25px;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 15px;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  transition: 0.2s ease;
+}
+
+.cart-item:hover {
+  background: var(--md-sys-color-surface-container);
+}
+
+.cart-img {
+  border-radius: 12px;
+}
+
+.cart-info {
+  flex: 1;
+  margin: 0 15px;
+}
+
+.cart-info h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.cart-info p {
+  margin: 4px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.cart-price {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-error);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.remove-btn:hover {
+  transform: scale(1.2);
+}
+
+.cart-summary {
+  border-top: 2px solid var(--md-sys-color-outline-variant);
+  margin-top: 25px;
+  padding-top: 20px;
+  text-align: center;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.checkout-btn {
+  background: var(--md-sys-color-secondary);
+  color: var(--md-sys-color-on-secondary);
+  border: none;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.checkout-btn:hover {
+  background: var(--md-sys-color-secondary-fixed-dim);
+}
+
+.site-footer {
+  background-color: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  font-family: sans-serif;
+  padding: 50px 20px 20px 20px;
+  box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+}
+
+.footer-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-section {
+  flex: 1 1 220px;
+}
+
+.footer-logo-about h2 {
+  color: var(--md-sys-color-primary);
+  margin-bottom: 10px;
+}
+
+.footer-logo-about p {
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.footer-links h3,
+.footer-newsletter h3,
+.footer-social-contact h3 {
+  margin-bottom: 15px;
+  color: var(--md-sys-color-primary);
+}
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links ul li {
+  margin-bottom: 10px;
+}
+
+.footer-links ul li a {
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface);
+  transition: color 0.3s;
+}
+
+.footer-links ul li a:hover {
+  color: var(--md-sys-color-primary);
+}
+
+.footer-newsletter form {
+  display: flex;
+  gap: 10px;
+}
+
+.footer-newsletter input[type="email"] {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 5px;
+  background-color: var(--md-sys-color-surface-bright);
+  color: var(--md-sys-color-on-surface);
+}
+
+.footer-newsletter button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.footer-newsletter button:hover {
+  background-color: var(--md-sys-color-primary-container);
+}
+
+.footer-social-contact .social-icons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.footer-social-contact .social-icons a img {
+  width: 30px;
+  height: 30px;
+  transition: transform 0.3s;
+}
+
+.footer-social-contact .social-icons a img:hover {
+  transform: scale(1.2);
+}
+
+.footer-social-contact p {
+  margin: 5px 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: 30px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: 15px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+}
+
+@media (max-width: 992px) {
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-newsletter form {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-social-contact .social-icons {
+    justify-content: center;
+  }
+}

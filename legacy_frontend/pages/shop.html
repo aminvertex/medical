@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>فروشگاه | MAHDAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/shop.css" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,0..200&display=swap">
+  <script src="/JS/header.js"></script>
+</head>
+
+<body class="light">
+
+  <!-- 🌟 Header -->
+  <header class="ai-header">
+    <div class="container header-container">
+      <div class="logo">
+        <img src="/asset/logonomy-1763455510995.png" alt="لوگو" />
+        <span>MAHDAI</span>
+      </div>
+
+      <button class="hamburger" aria-label="منوی ناوبری">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="nav" id="mainNav">
+        <a href="./index.html">خانه</a>
+        <a href="./shop.html">فروشگاه</a>
+        <a href="./contact-us.html">تماس با ما</a>
+        <a href="./team.html">اعضای تیم ما</a>
+        <a href="./about-us.html">درباره ما</a>
+      </nav>
+
+      <div class="badge-wrapper">
+        <a href="/pages/checkout.HTML">
+          <span class="material-symbols-outlined img-icon">shopping_bag</span></a>
+        <span id="cart-badge" class="badge-large">0</span>
+        <button class="btn-primary"> <a href="/pages/auth.html">ورود / ثبت‌نام</a>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-menu-overlay" id="mobileMenu">
+      <button class="close-btn" aria-label="بستن منو">&times;</button>
+      <a href="./index.html">خانه</a>
+      <a href="./shop.html">فروشگاه</a>
+      <a href="./contact-us.html">تماس با ما</a>
+      <a href="./team.html">اعضای تیم ما</a>
+      <a href="./about-us.html">درباره ما</a>
+    </div>
+  </header>
+
+  <!-- 🌟 Main Content -->
+  <main class="main-container">
+    <div class="container">
+      <h1 class="page-title">دوره‌های آموزشی هوش مصنوعی</h1>
+
+      <!-- 🔍 جستجو و فیلترها -->
+      <div class="filters-section">
+        <!-- جستجو -->
+        <div class="search-box">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" id="searchInput" placeholder="جستجوی دوره..." />
+        </div>
+
+        <!-- فیلتر دسته‌بندی -->
+        <div class="filter-group">
+          <label for="categoryFilter">دسته‌بندی:</label>
+          <select id="categoryFilter">
+            <option value="all">همه دوره‌ها</option>
+            <option value="ml">یادگیری ماشین</option>
+            <option value="dl">یادگیری عمیق</option>
+            <option value="nlp">ChatGPT و NLP</option>
+            <option value="data">داده‌کاوی</option>
+          </select>
+        </div>
+
+        <!-- مرتب‌سازی -->
+        <div class="filter-group">
+          <label for="sortSelect">مرتب‌سازی:</label>
+          <select id="sortSelect">
+            <option value="default">پیش‌فرض</option>
+            <option value="price-asc">ارزان‌ترین</option>
+            <option value="price-desc">گران‌ترین</option>
+            <option value="name">الفبایی</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 🔗 لینک‌های سریع -->
+      <div class="quick-links">
+        <button class="quick-link-btn" data-filter="bestsellers">پرفروش‌ها</button>
+        <button class="quick-link-btn" data-filter="ml">یادگیری ماشین</button>
+        <button class="quick-link-btn" data-filter="dl">یادگیری عمیق</button>
+        <button class="quick-link-btn" data-filter="nlp">ChatGPT</button>
+        <button class="quick-link-btn" data-filter="data">داده‌کاوی</button>
+      </div>
+
+      <!-- 📦 لیست محصولات -->
+      <div class="course-grid" id="courseGrid">
+        <!-- دوره‌ها با JavaScript پر می‌شوند -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer light">
+    <div class="footer-container">
+      <div class="footer-section footer-logo-about">
+        <h2>MAHDAI</h2>
+        <p>ما در آکادمی هوش مصنوعی MAHDAI با هدف democratize کردن علم هوش مصنوعی در میان فارسی‌زبانان فعالیت می‌کنیم.
+        </p>
+      </div>
+      <div class="footer-section footer-links">
+        <h3>لینک‌های سریع</h3>
+        <ul>
+          <li><a href="index.html">خانه</a></li>
+          <li><a href="shop.html">فروشگاه</a></li>
+          <li><a href="about-us.html">درباره ما</a></li>
+          <li><a href="contact-us.html">تماس با ما</a></li>
+        </ul>
+      </div>
+      <div class="footer-section footer-newsletter">
+        <h3>عضویت در خبرنامه</h3>
+        <form>
+          <input type="email" placeholder="ایمیل خود را وارد کنید" />
+          <button type="submit" class="footer-s">ثبت</button>
+        </form>
+      </div>
+      <div class="footer-section footer-social-contact">
+        <h3>ما را دنبال کنید</h3>
+        <div class="social-icons">
+          <a href="#"><img src="icons/facebook.svg" alt="Facebook" /></a>
+          <a href="#"><img src="icons/twitter.svg" alt="Twitter" /></a>
+          <a href="#"><img src="icons/instagram.svg" alt="Instagram" /></a>
+          <a href="#"><img src="icons/linkedin.svg" alt="LinkedIn" /></a>
+        </div>
+        <p>ایمیل: info@mahdai.ir</p>
+        <p>تلفن: ۰۹۱۲۳۴۵۶۷۸۹</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MahdAI. تمام حقوق محفوظ است.</p>
+    </div>
+  </footer>
+
+  <script>
+    // 📦 داده‌های دوره‌ها
+    const courses = [
+      {
+        id: 1,
+        title: "یادگیری ماشین (Machine Learning)",
+        description: "آموزش مفاهیم پایه و الگوریتم‌های پرکاربرد یادگیری ماشین با پروژه‌های واقعی.",
+        price: 2490000,
+        category: "ml",
+        image: "/asset/mas.png",
+        bestseller: true
+      },
+      {
+        id: 2,
+        title: "یادگیری عمیق (Deep Learning)",
+        description: "آموزش شبکه‌های عصبی و CNN، RNN، با TensorFlow و PyTorch.",
+        price: 2990000,
+        category: "dl",
+        image: "/asset/yad.png",
+        bestseller: true
+      },
+      {
+        id: 3,
+        title: "ساخت چت‌بات با ChatGPT API",
+        description: "یادگیری نحوه ساخت چت‌بات‌های هوشمند با OpenAI و کاربرد آن در پروژه‌ها.",
+        price: 1990000,
+        category: "nlp",
+        image: "/asset/sakg.png",
+        bestseller: false
+      },
+      {
+        id: 4,
+        title: "داده‌کاوی و تحلیل داده",
+        description: "تحلیل داده‌ها با Python، Pandas و Scikit-Learn برای پروژه‌های واقعی.",
+        price: 2450000,
+        category: "data",
+        image: "/asset/dad.png",
+        bestseller: false
+      }
+    ];
+
+    // 💰 فرمت قیمت
+    function formatPrice(price) {
+      return price.toLocaleString('fa-IR') + " تومان";
+    }
+
+    // 🖼️ رندر کارت‌ها
+    function renderCourses(filtered) {
+      const grid = document.getElementById('courseGrid');
+      grid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<p class="no-result">دوره‌ای یافت نشد.</p>';
+        return;
+      }
+
+      filtered.forEach(course => {
+        const card = document.createElement('div');
+        card.className = 'course-card';
+        card.innerHTML = `
+        <div class="favorite-btn">
+          <span class="material-icons-outlined">favorite_border</span>
+        </div>
+        <img src="${course.image}" alt="${course.title}" />
+        <div class="card-body">
+            <a href="product.html?id=${course.id}" class="course-title-link"><h3>${course.title}</h3></a>
+          <p>${course.description}</p>
+          <div class="price">${formatPrice(course.price)}</div>
+          <button class="btn-primary add-to-cart">افزودن به سبد خرید</button>
+        </div>
+      `;
+        grid.appendChild(card);
+
+        // ❤️ favorite toggle
+        const favBtn = card.querySelector('.favorite-btn');
+        favBtn.addEventListener('click', () => {
+          favBtn.classList.toggle('active');
+          const icon = favBtn.querySelector('span');
+          icon.textContent = favBtn.classList.contains('active') ? 'favorite' : 'favorite_border';
+        });
+
+        // 🛒 سبد خرید
+        const cartBtn = card.querySelector('.add-to-cart');
+        cartBtn.addEventListener('click', () => {
+          alert("دوره «" + course.title + "» به سبد خرید اضافه شد.");
+        });
+      });
+    }
+
+    // 🔍 فیلتر و جستجو
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const category = document.getElementById('categoryFilter').value;
+      const sortBy = document.getElementById('sortSelect').value;
+
+      let filtered = courses.filter(course => {
+        const matchesSearch = course.title.toLowerCase().includes(searchTerm) ||
+          course.description.toLowerCase().includes(searchTerm);
+        const matchesCategory = category === 'all' || course.category === category;
+        return matchesSearch && matchesCategory;
+      });
+
+      // مرتب‌سازی
+      if (sortBy === 'price-asc') {
+        filtered.sort((a, b) => a.price - b.price);
+      } else if (sortBy === 'price-desc') {
+        filtered.sort((a, b) => b.price - a.price);
+      } else if (sortBy === 'name') {
+        filtered.sort((a, b) => a.title.localeCompare(b.title, 'fa'));
+      }
+
+      renderCourses(filtered);
+    }
+
+    // 🔗 لینک‌های سریع
+    document.querySelectorAll('.quick-link-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        if (filter === 'bestsellers') {
+          const bestsellers = courses.filter(c => c.bestseller);
+          renderCourses(bestsellers);
+        } else {
+          document.getElementById('categoryFilter').value = filter;
+          applyFilters();
+        }
+      });
+    });
+
+    // 🎯 رویدادها
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('sortSelect').addEventListener('change', applyFilters);
+
+    // 📱 منوی موبایل
+    document.addEventListener('DOMContentLoaded', () => {
+      const hamburger = document.querySelector('.hamburger');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const closeBtn = document.querySelector('.close-btn');
+
+      if (hamburger && mobileMenu && closeBtn) {
+        hamburger.addEventListener('click', () => mobileMenu.style.display = 'flex');
+        closeBtn.addEventListener('click', () => mobileMenu.style.display = 'none');
+        mobileMenu.addEventListener('click', e => {
+          if (e.target === mobileMenu) mobileMenu.style.display = 'none';
+        });
+      }
+
+      // رندر اولیه
+      renderCourses(courses);
+    });
+  </script>
+
+</body>
+
+</html>

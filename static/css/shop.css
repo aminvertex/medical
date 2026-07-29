@@ -1,0 +1,256 @@
+@import url(/css/light.css);
+@import url(/css/header&footer.css);
+.main-container {
+  padding: 2rem 0;
+  width: 1300px;
+  margin: auto;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+/* ===============================
+   FILTERS & QUICK LINKS — MATERIAL 3 STYLE
+================================ */
+
+.filters-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+  background: var(--md-sys-color-surface);
+  padding: 0.5rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  align-items: end;
+}
+
+.search-box {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  background: var(--md-sys-color-surface-bright);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  padding: 4px ;
+  min-width: 200px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-box:hover,
+.search-box:focus-within {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.search-box .material-icons-outlined {
+  color: var(--md-sys-color-on-surface-variant);
+  margin-left: 0.5rem;
+  font-size: 20px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 1rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 160px;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: "Vazirmatn", sans-serif;
+}
+
+.filter-group select {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-bright);
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-group select:hover,
+.filter-group select:focus {
+  border-color: var(--md-sys-color-primary);
+}
+
+/* --- Quick Links --- */
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.quick-link-btn {
+  padding: 0.5rem 1.2rem;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 9999px;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-link-btn:hover {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+.quick-link-btn:active {
+  transform: translateY(1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    min-width: auto;
+  }
+
+  .filter-group {
+    min-width: auto;
+  }
+}
+/* --- Course Grid --- */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+}
+
+.no-result {
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 1.1rem;
+  grid-column: 1 / -1;
+}
+
+/* --- Course Card (همان استایل صفحه اصلی) --- */
+.course-card {
+  background: var(--md-sys-color-surface);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.course-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 1.2rem;
+  text-align: right;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body h3 {
+  font-size: 1.1rem;
+  color: var(--md-sys-color-primary);
+  margin-bottom: 0.6rem;
+}
+
+.card-body p {
+  font-size: 0.95rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.price {
+  font-weight: 700;
+  color: var(--md-sys-color-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 40px;
+  height: 40px;
+  background: var(--md-sys-color-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  z-index: 2;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.1);
+}
+
+.favorite-btn span {
+  font-size: 20px;
+  color: var(--md-sys-color-outline);
+}
+
+.favorite-btn.active span {
+  font-family: "Material Icons";
+  color: var(--md-sys-color-error);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    min-width: auto;
+  }
+
+  .filter-group select {
+    min-width: auto;
+  }
+}

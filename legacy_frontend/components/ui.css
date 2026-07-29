@@ -1,0 +1,366 @@
+
+/* -------------------------------
+   BUTTONS (Filled, Outlined, Text)
+------------------------------- */
+.md-button {
+  font-family: "Vazirmatn", sans-serif;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Filled Button */
+.md-button--filled {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: var(--md-sys-elevation-1);
+}
+.md-button--filled:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
+}
+.md-button--filled:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.md-button--filled:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 80%, black);
+}
+.md-button--filled:disabled {
+  background-color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-surface-container-highest);
+  cursor: not-allowed;
+  box-shadow: var(--md-sys-elevation-0);
+}
+
+/* Outlined Button */
+.md-button--outlined {
+  background-color: transparent;
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-outline);
+}
+.md-button--outlined:hover {
+  background-color: var(--md-sys-color-primary-container);
+}
+.md-button--outlined:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.md-button--outlined:active {
+  background-color: var(--md-sys-color-primary-fixed-dim);
+}
+.md-button--outlined:disabled {
+  border-color: var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: not-allowed;
+}
+
+/* Text Button */
+.md-button--text {
+  background-color: transparent;
+  color: var(--md-sys-color-primary);
+  border: none;
+}
+.md-button--text:hover {
+  background-color: var(--md-sys-color-primary-container);
+}
+.md-button--text:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.md-button--text:active {
+  background-color: var(--md-sys-color-primary-fixed-dim);
+}
+.md-button--text:disabled {
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.md-button--small {
+  padding: 6px 12px;
+  font-size: var(--md-sys-typescale-label-large-font);
+  border-radius: var(--md-sys-radius-small);
+}
+.md-button--medium {
+  padding: 10px 24px;
+  font-size: var(--md-sys-typescale-label-large-font);
+  border-radius: var(--md-sys-radius-medium);
+}
+.md-button--large {
+  padding: 14px 32px;
+  font-size: var(--md-sys-typescale-body-large-font);
+  border-radius: var(--md-sys-radius-medium);
+}
+
+/* -------------------------------
+   TEXT FIELD
+------------------------------- */
+.md-text-field {
+  position: relative;
+  margin-bottom: 20px;
+}
+.md-text-field__input {
+  width: 100%;
+  padding: 16px 12px 8px;
+  border: none;
+  border-bottom: 1px solid var(--md-sys-color-outline);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.md-text-field__input:focus {
+  border-color: var(--md-sys-color-primary);
+}
+.md-text-field__input:disabled {
+  color: var(--md-sys-color-on-surface-variant);
+  border-color: var(--md-sys-color-outline-variant);
+  cursor: not-allowed;
+}
+.md-text-field__label {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 16px;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+.md-text-field__input:focus + .md-text-field__label,
+.md-text-field__input:not(:placeholder-shown) + .md-text-field__label {
+  top: 4px;
+  font-size: 12px;
+  color: var(--md-sys-color-primary);
+}
+.md-text-field__error {
+  color: var(--md-sys-color-error);
+  font-size: 12px;
+  margin-top: 4px;
+  min-height: 16px;
+}
+
+/* -------------------------------
+   CHECKBOX
+------------------------------- */
+.md-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.md-checkbox__input {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.md-checkbox__input:hover {
+  border-color: var(--md-sys-color-primary);
+}
+.md-checkbox__input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.md-checkbox__input:checked {
+  background-color: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+.md-checkbox__input:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--md-sys-color-on-primary);
+  font-size: 14px;
+  font-weight: bold;
+}
+.md-checkbox__input:disabled {
+  border-color: var(--md-sys-color-outline-variant);
+  cursor: not-allowed;
+}
+.md-checkbox__input:disabled:checked {
+  background-color: var(--md-sys-color-on-surface-variant);
+  border-color: var(--md-sys-color-on-surface-variant);
+}
+.md-checkbox__label {
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 16px;
+}
+.md-checkbox__input:disabled ~ .md-checkbox__label {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* -------------------------------
+   RADIO BUTTON
+------------------------------- */
+.md-radio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.md-radio__input {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.md-radio__input:hover {
+  border-color: var(--md-sys-color-primary);
+}
+.md-radio__input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.md-radio__input:checked {
+  border-color: var(--md-sys-color-primary);
+}
+.md-radio__input:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+}
+.md-radio__input:disabled {
+  border-color: var(--md-sys-color-outline-variant);
+  cursor: not-allowed;
+}
+.md-radio__input:disabled:checked {
+  border-color: var(--md-sys-color-on-surface-variant);
+}
+.md-radio__input:disabled:checked::after {
+  background-color: var(--md-sys-color-on-surface-variant);
+}
+.md-radio__label {
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 16px;
+}
+.md-radio__input:disabled ~ .md-radio__label {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* -------------------------------
+   SWITCH
+------------------------------- */
+.md-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.md-switch__input {
+  appearance: none;
+  width: 52px;
+  height: 32px;
+  background-color: var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.md-switch__input:hover {
+  background-color: var(--md-sys-color-on-surface-variant);
+}
+.md-switch__input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.md-switch__input:checked {
+  background-color: var(--md-sys-color-primary-container);
+}
+.md-switch__input::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.md-switch__input:checked::before {
+  transform: translateX(-20px);
+}
+.md-switch__input:disabled {
+  background-color: var(--md-sys-color-outline-variant);
+  cursor: not-allowed;
+}
+.md-switch__input:disabled:checked {
+  background-color: var(--md-sys-color-on-surface-variant);
+}
+.md-switch__label {
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 16px;
+}
+.md-switch__input:disabled ~ .md-switch__label {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* -------------------------------
+   CARD
+------------------------------- */
+.md-card {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-radius-medium);
+  padding: 16px;
+  box-shadow: var(--md-sys-elevation-1);
+  transition: box-shadow 0.2s;
+}
+.md-card:hover {
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+/* -------------------------------
+   CHIP
+------------------------------- */
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-radius-full);
+  color: var(--md-sys-color-on-surface);
+  font-family: "Vazirmatn", sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.md-chip:hover {
+  background: var(--md-sys-color-surface-container);
+}
+.md-chip:active {
+  background: var(--md-sys-color-surface-container-high);
+}
+.md-chip.selected {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}

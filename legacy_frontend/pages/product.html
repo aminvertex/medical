@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>دوره یادگیری ماشین | MAHDAI</title>
+  <!-- ✅ بدون فاصله اضافه -->
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Icons"
+  onerror="this.onerror=null;this.href='/fonts/material-icons.css';"
+/>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/product.css" />
+  <script src="/JS/header.js"></script>
+</head>
+<body class="light">
+
+<!-- 🌟 Header -->
+<header class="ai-header">
+  <div class="container header-container">
+    <div class="logo">
+      <img src="/asset/logonomy-1763455510995.png" alt="لوگو" />
+      <span>MAHDAI</span>
+    </div>
+
+    <button class="hamburger" aria-label="منوی ناوبری">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav" id="mainNav">
+      <a href="./index.html">خانه</a>
+      <a href="./shop.html">فروشگاه</a>
+      <a href="./contact-us.html">تماس با ما</a>
+      <a href="./team.html">اعضای تیم ما</a>
+      <a href="./about-us.html">درباره ما</a>
+    </nav>
+
+    <div class="badge-wrapper">
+      <a href="/pages/checkout.HTML">
+      <span class="material-symbols-outlined img-icon">shopping_bag</span></a>
+      <span id="cart-badge" class="badge-large">0</span>
+      <button class="btn-primary">      <a href="/pages/auth.html">ورود / ثبت‌نام</a>
+</button>
+    </div>
+  </div>
+
+  <div class="mobile-menu-overlay" id="mobileMenu">
+    <button class="close-btn" aria-label="بستن منو">&times;</button>
+    <a href="./index.html">خانه</a>
+    <a href="./shop.html">فروشگاه</a>
+    <a href="./contact-us.html">تماس با ما</a>
+    <a href="./team.html">اعضای تیم ما</a>
+    <a href="./about-us.html">درباره ما</a>
+  </div>
+</header>
+
+<main class="main-container">
+    
+  <div class="container">
+    <!-- 📦 Product Detail -->
+    <div class="product-detail">
+      <div class="product-image">
+        <img id="productImage" src="/asset/mas.png" alt="دوره یادگیری ماشین" />
+      </div>
+
+      <div class="product-info">
+        <h1 id="productTitle">یادگیری ماشین (Machine Learning)</h1>
+        
+        <!-- ⭐ Rating -->
+        <div class="rating-section">
+          <div class="stars" id="ratingStars">
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+          </div>
+          <span class="rating-text">(۱۲۴ نظر)</span>
+        </div>
+
+        <p id="productDescription" class="product-description">
+          آموزش مفاهیم پایه و الگوریتم‌های پرکاربرد یادگیری ماشین با پروژه‌های واقعی.
+        </p>
+
+        <div class="product-price" id="productPrice">۲٬۴۹۰٬۰۰۰ تومان</div>
+
+        <button class="btn-primary big add-to-cart-btn">افزودن به سبد خرید</button>
+      </div>
+    </div>
+
+    <!-- 💬 Reviews -->
+    <section class="reviews-section">
+      <h2 class="section-title">نظرات کاربران</h2>
+
+      <!-- Form -->
+      <form class="review-form">
+        <textarea placeholder="نظر خود را بنویسید..." required></textarea>
+        <div class="review-form-actions">
+          <div class="stars" id="userRating">
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+            <span class="star material-icons">star_border</span>
+          </div>
+          <button type="submit" class="btn-primary">ثبت نظر</button>
+        </div>
+      </form>
+
+      <!-- Existing Reviews -->
+      <div class="reviews-list">
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-author">سارا</div>
+            <div class="stars">
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+            </div>
+          </div>
+          <p>عالی بود! پروژه‌های پایانی واقعاً کاربردی بودند.</p>
+        </div>
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-author">علی</div>
+            <div class="stars">
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+              <span class="material-icons">star</span>
+              <span class="material-icons">star_border</span>
+            </div>
+          </div>
+          <p>محتوا عالی ولی پشتیبانی کمی دیر پاسخ می‌داد.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🔗 Related Products -->
+    <section class="related-products">
+      <h2 class="section-title">دوره‌های مرتبط</h2>
+      <div class="course-grid" id="relatedGrid">
+        <!-- پر می‌شود با JS -->
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer light">
+  <div class="footer-container">
+    <div class="footer-section footer-logo-about">
+      <h2>MAHDAI</h2>
+      <p>ما در آکادمی هوش مصنوعی MAHDAI با هدف democratize کردن علم هوش مصنوعی در میان فارسی‌زبانان فعالیت می‌کنیم.</p>
+    </div>
+    <div class="footer-section footer-links">
+      <h3>لینک‌های سریع</h3>
+      <ul>
+        <li><a href="index.html">خانه</a></li>
+        <li><a href="shop.html">فروشگاه</a></li>
+        <li><a href="about-us.html">درباره ما</a></li>
+        <li><a href="contact-us.html">تماس با ما</a></li>
+      </ul>
+    </div>
+    <div class="footer-section footer-newsletter">
+      <h3>عضویت در خبرنامه</h3>
+      <form>
+        <input type="email" placeholder="ایمیل خود را وارد کنید" />
+        <button type="submit" class="footer-s">ثبت</button>
+      </form>
+    </div>
+    <div class="footer-section footer-social-contact">
+      <h3>ما را دنبال کنید</h3>
+      <div class="social-icons">
+        <a href="#"><img src="icons/facebook.svg" alt="Facebook" /></a>
+        <a href="#"><img src="icons/twitter.svg" alt="Twitter" /></a>
+        <a href="#"><img src="icons/instagram.svg" alt="Instagram" /></a>
+        <a href="#"><img src="icons/linkedin.svg" alt="LinkedIn" /></a>
+      </div>
+      <p>ایمیل: info@mahdai.ir</p>
+      <p>تلفن: ۰۹۱۲۳۴۵۶۷۸۹</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 MahdAI. تمام حقوق محفوظ است.</p>
+  </div>
+</footer>
+
+<script>
+  // 📦 داده‌های دوره‌ها
+  const courses = [
+    { id: 1, title: "یادگیری ماشین", desc: "آموزش ML با پروژه", price: "۲٬۴۹۰٬۰۰۰", img: "/asset/mas.png", category: "ml" },
+    { id: 2, title: "یادگیری عمیق", desc: "شبکه‌های عصبی با TensorFlow", price: "۲٬۹۹۰٬۰۰۰", img: "/asset/yad.png", category: "dl" },
+    { id: 3, title: "ChatGPT API", desc: "ساخت چت‌بات هوشمند", price: "۱٬۹۹۰٬۰۰۰", img: "/asset/sakg.png", category: "nlp" },
+    { id: 4, title: "داده‌کاوی", desc: "تحلیل داده با Python", price: "۲٬۴۵۰٬۰۰۰", img: "/asset/dad.png", category: "data" }
+  ];
+
+  // 🔍 دریافت ID از URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = parseInt(urlParams.get('id')) || 1;
+  const product = courses.find(c => c.id === productId) || courses[0];
+
+  // 🖼️ پر کردن اطلاعات محصول
+  document.getElementById('productTitle').textContent = product.title;
+  document.getElementById('productDescription').textContent = product.desc;
+  document.getElementById('productPrice').textContent = product.price + " تومان";
+  document.getElementById('productImage').src = product.img;
+
+  // ⭐ سیستم امتیاز (صفحه محصول)
+  function setupRating(starContainerId, callback) {
+  const stars = document.querySelectorAll(`#${starContainerId} .star`);
+  stars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      for (let i = 0; i < 5; i++) {
+        if (i <= index) {
+          stars[i].textContent = 'star'; // فقط تغییر متن
+        } else {
+          stars[i].textContent = 'star_border'; // فقط تغییر متن
+        }
+      }
+      if (callback) callback(index + 1);
+    });
+  });
+}
+
+  let userRatingValue = 0;
+  setupRating('ratingStars'); // فقط نمایشی
+  setupRating('userRating', (rating) => {
+    userRatingValue = rating;
+  });
+
+  // 🛒 سبد خرید
+  document.querySelector('.add-to-cart-btn').addEventListener('click', () => {
+    alert("دوره «" + product.title + "» به سبد خرید اضافه شد.");
+  });
+
+  // 💬 ثبت نظر
+  document.querySelector('.review-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (userRatingValue === 0) {
+      alert("لطفاً امتیاز خود را انتخاب کنید.");
+      return;
+    }
+    alert("نظر شما با موفقیت ثبت شد!");
+    e.target.reset();
+    // Reset stars
+    const userStars = document.querySelectorAll('#userRating .star');
+    userStars.forEach(s => {
+      s.textContent = 'star_border';
+      s.classList.add('material-icons');
+      s.classList.remove('material-icons');
+    });
+    userRatingValue = 0;
+  });
+
+  // 🔗 محصولات مرتبط
+  const related = courses.filter(c => c.id !== productId).slice(0, 3);
+  const grid = document.getElementById('relatedGrid');
+  related.forEach(course => {
+    const card = document.createElement('div');
+    card.className = 'course-card';
+    card.innerHTML = `
+      <img src="${course.img}" alt="${course.title}" />
+      <div class="card-body">
+        <h3>${course.title}</h3>
+        <div class="price">${course.price} تومان</div>
+        <a href="product.html?id=${course.id}" class="btn-primary small">مشاهده</a>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  
+</script>
+
+</body>
+</html>

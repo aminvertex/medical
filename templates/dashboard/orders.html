@@ -1,0 +1,7 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load catalog_tags %}
+{% block title %}سفارش‌ها و فروش | MAHDAI{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-heading"><div><span class="eyebrow">فروش</span><h1>سفارش‌ها و پرداخت‌ها</h1><p>این گزارش از Join سفارش، مشتری، ردیف سفارش و پرداخت ساخته می‌شود.</p></div></div>
+<div class="content-card"><div class="table-wrap"><table class="admin-table"><thead><tr><th>شماره سفارش</th><th>مشتری</th><th>دوره‌ها</th><th>جمع</th><th>تخفیف</th><th>نهایی</th><th>پرداخت</th><th>تاریخ</th></tr></thead><tbody>{% for order in orders %}<tr><td><strong>{{ order.number }}</strong>{% if order.payment.reference_code %}<small>{{ order.payment.reference_code }}</small>{% endif %}</td><td>{{ order.user.full_name }}<small>{{ order.user.email }}</small></td><td>{% for item in order.items.all %}<span class="table-pill">{{ item.course_code }}</span>{% endfor %}</td><td>{{ order.subtotal|toman }}</td><td>{{ order.discount_amount|toman }}</td><td><strong>{{ order.total_amount|toman }}</strong></td><td><span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td><td>{{ order.created_at|date:'Y/m/d H:i' }}</td></tr>{% empty %}<tr><td colspan="8">سفارشی ثبت نشده است.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

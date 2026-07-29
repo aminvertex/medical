@@ -1,0 +1,8 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% block title %}مدیریت کاربران | MAHDAI{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-heading"><div><span class="eyebrow">کنترل دسترسی</span><h1>کاربران و نقش‌ها</h1><p>تغییر نقش یا فعال‌بودن از API مدیریتی انجام می‌شود.</p></div></div>
+<div class="content-card"><div class="table-wrap"><table class="admin-table"><thead><tr><th>کاربر</th><th>تماس</th><th>نقش</th><th>وضعیت</th><th>عضویت</th><th>عملیات</th></tr></thead><tbody>{% for user in users %}<tr data-user-row="{{ user.id }}"><td><strong>{{ user.full_name }}</strong><small>{{ user.email }}</small></td><td>{{ user.phone|default:'—' }}</td><td><select data-user-role="{{ user.id }}" {% if user.is_superuser %}disabled{% endif %}>{% for value,label in roles %}<option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td><td><span class="status {% if user.is_active %}status-paid{% else %}status-cancelled{% endif %}" data-user-status-label="{{ user.id }}">{% if user.is_active %}فعال{% else %}غیرفعال{% endif %}</span></td><td>{{ user.date_joined|date:'Y/m/d' }}</td><td><button class="btn btn-outline btn-small" type="button" data-save-user="{{ user.id }}">ذخیره نقش</button><button class="btn btn-ghost btn-small" type="button" data-toggle-user="{{ user.id }}" data-active="{{ user.is_active|yesno:'true,false' }}" {% if user.id == request.user.id %}disabled{% endif %}>{% if user.is_active %}غیرفعال‌کردن{% else %}فعال‌کردن{% endif %}</button></td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/dashboard.js' %}" defer></script>{% endblock %}

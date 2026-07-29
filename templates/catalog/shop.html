@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load catalog_tags %}
+{% block title %}فروشگاه دوره‌ها | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <div class="container"><span class="eyebrow">فروشگاه آموزشی</span><h1>دوره‌های تخصصی هوش مصنوعی</h1><p>با جست‌وجو، دسته‌بندی و مرتب‌سازی، دوره مناسب مسیر خود را پیدا کنید.</p></div>
+</section>
+<section class="section">
+  <div class="container">
+    <form class="filter-panel" method="get">
+      <label class="search-control"><span>⌕</span><input type="search" name="q" value="{{ q }}" placeholder="عنوان، توضیح یا کد دوره"></label>
+      <label><span>دسته‌بندی</span><select name="category"><option value="">همه دسته‌ها</option>{% for category in categories %}<option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></label>
+      <label><span>مرتب‌سازی</span><select name="sort"><option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>جدیدترین</option><option value="bestseller" {% if selected_sort == 'bestseller' %}selected{% endif %}>پرفروش‌ترین</option><option value="price_asc" {% if selected_sort == 'price_asc' %}selected{% endif %}>ارزان‌ترین</option><option value="price_desc" {% if selected_sort == 'price_desc' %}selected{% endif %}>گران‌ترین</option><option value="title" {% if selected_sort == 'title' %}selected{% endif %}>الفبایی</option></select></label>
+      <button class="btn btn-primary" type="submit">اعمال فیلتر</button>
+    </form>
+    <div class="result-row"><strong>{{ courses|length }} دوره یافت شد</strong>{% if q or selected_category %}<a class="text-link" href="{% url 'shop' %}">پاک‌کردن فیلترها</a>{% endif %}</div>
+    <div class="course-grid">
+      {% for course in courses %}
+        {% include 'includes/course_card.html' with course=course favorite_ids=favorite_ids %}
+      {% empty %}<div class="empty-state"><h3>دوره‌ای پیدا نشد</h3><p>عبارت جست‌وجو یا فیلترها را تغییر دهید.</p></div>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

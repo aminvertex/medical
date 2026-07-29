@@ -1,0 +1,22 @@
+{% load catalog_tags %}
+<article class="course-card">
+  <div class="course-cover-wrap">
+    <a href="{{ course.get_absolute_url }}"><img class="course-cover" src="{{ course.image_url }}" alt="{{ course.title }}"></a>
+    {% if course.is_bestseller %}<span class="badge badge-hot">پرفروش</span>{% endif %}
+    {% if course.discount_percent %}<span class="badge badge-discount">٪{{ course.discount_percent }} تخفیف</span>{% endif %}
+    <button class="favorite-button {% if force_favorite or course.id|in_set:favorite_ids %}active{% endif %}" type="button" data-favorite-course="{{ course.id }}" aria-label="علاقه‌مندی">♥</button>
+  </div>
+  <div class="course-body">
+    <div class="course-meta"><span>{{ course.category.name }}</span><span>{{ course.get_level_display }}</span></div>
+    <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+    <p>{{ course.short_description|truncatechars:110 }}</p>
+    <div class="instructor-line">مدرس: {{ course.instructor.full_name }}</div>
+    <div class="course-footer">
+      <div class="price-block">
+        <strong>{{ course.price|toman }}</strong>
+        {% if course.previous_price %}<del>{{ course.previous_price|toman }}</del>{% endif %}
+      </div>
+      <button class="btn btn-primary btn-small" type="button" data-add-course="{{ course.id }}">افزودن به سبد</button>
+    </div>
+  </div>
+</article>

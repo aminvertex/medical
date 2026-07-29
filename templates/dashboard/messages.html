@@ -1,0 +1,8 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% block title %}پیام‌های تماس | MAHDAI{% endblock %}
+{% block dashboard_content %}
+<div class="dashboard-heading"><div><span class="eyebrow">پشتیبانی</span><h1>پیام‌های تماس</h1></div></div>
+<div class="message-grid">{% for message in contact_messages %}<article class="content-card message-card"><div><span class="status status-{{ message.status|lower }}">{{ message.get_status_display }}</span><small>{{ message.created_at|date:'Y/m/d H:i' }}</small></div><h3>{{ message.subject }}</h3><p>{{ message.message }}</p><footer><span>{{ message.name }} — {{ message.email }}</span><select data-message-status="{{ message.id }}">{% for value,label in statuses %}<option value="{{ value }}" {% if message.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></footer></article>{% empty %}<div class="empty-state">پیامی ثبت نشده است.</div>{% endfor %}</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/dashboard.js' %}" defer></script>{% endblock %}

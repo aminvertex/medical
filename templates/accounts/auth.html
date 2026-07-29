@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ورود و ثبت‌نام | MAHDAI{% endblock %}
+{% block content %}
+<section class="auth-section">
+  <div class="container auth-layout">
+    <div class="auth-intro">
+      <span class="eyebrow light-eyebrow">حساب کاربری MAHDAI</span>
+      <h1>یادگیری شما از اینجا شروع می‌شود.</h1>
+      <p>با ساخت حساب می‌توانید سبد خرید، سفارش‌ها، دوره‌های خریداری‌شده و علاقه‌مندی‌های خود را در یک محل مدیریت کنید.</p>
+      <ul><li>رمز عبور به‌صورت Hash در دیتابیس ذخیره می‌شود.</li><li>نشست ورود با Cookie امن Django مدیریت می‌شود.</li><li>نقش عمومی همیشه «دانشجو» است؛ نقش مدرس یا مدیر فقط توسط مدیر تعیین می‌شود.</li></ul>
+    </div>
+    <div class="auth-card">
+      <div class="tabs"><button class="tab active" type="button" data-auth-tab="login">ورود</button><button class="tab" type="button" data-auth-tab="register">ثبت‌نام</button></div>
+      <form id="login-form" class="auth-form active" data-auth-panel="login">
+        {% csrf_token %}
+        <label>ایمیل<input name="email" type="email" autocomplete="email" required placeholder="name@example.com"></label>
+        <label>رمز عبور<input name="password" type="password" autocomplete="current-password" required minlength="8" placeholder="حداقل ۸ نویسه"></label>
+        <button class="btn btn-primary btn-block" type="submit">ورود به حساب</button>
+      </form>
+      <form id="register-form" class="auth-form" data-auth-panel="register">
+        {% csrf_token %}
+        <div class="form-grid two"><label>نام<input name="first_name" required maxlength="80"></label><label>نام خانوادگی<input name="last_name" required maxlength="100"></label></div>
+        <label>ایمیل<input name="email" type="email" autocomplete="email" required></label>
+        <label>شماره موبایل<input name="phone" type="tel" inputmode="numeric" required minlength="10" maxlength="15" placeholder="09123456789"></label>
+        <div class="form-grid two"><label>رمز عبور<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>تکرار رمز<input name="password_confirm" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label></div>
+        <small class="form-hint">رمز مناسب حداقل ۸ نویسه دارد و صرفاً عددی یا بسیار ساده نیست.</small>
+        <button class="btn btn-primary btn-block" type="submit">ساخت حساب دانشجویی</button>
+      </form>
+      <div id="auth-error" class="form-error" hidden></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/auth.js' %}" defer></script>{% endblock %}

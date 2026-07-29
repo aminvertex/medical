@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load catalog_tags static %}
+{% block title %}{{ course.title }} | MAHDAI{% endblock %}
+{% block content %}
+<section class="course-detail-hero">
+  <div class="container detail-grid">
+    <div class="detail-copy">
+      <div class="breadcrumb"><a href="{% url 'home' %}">خانه</a><span>/</span><a href="{% url 'shop' %}">فروشگاه</a><span>/</span><b>{{ course.category.name }}</b></div>
+      <span class="eyebrow">کد دوره: {{ course.code }}</span>
+      <h1>{{ course.title }}</h1>
+      <p>{{ course.short_description }}</p>
+      <div class="detail-meta"><span>👤 {{ course.instructor.full_name }}</span><span>⏱ {{ course.duration_hours }} ساعت</span><span>📊 {{ course.get_level_display }}</span><span>⭐ {{ rating|floatformat:1 }} از ۵ ({{ rating_count }} نظر)</span></div>
+      <div class="detail-actions">
+        <div class="detail-price"><strong>{{ course.price|toman }}</strong>{% if course.previous_price %}<del>{{ course.previous_price|toman }}</del>{% endif %}</div>
+        <button class="btn btn-primary btn-large" type="button" data-add-course="{{ course.id }}">افزودن به سبد خرید</button>
+        <button class="btn btn-outline btn-large {% if is_favorite %}is-favorite{% endif %}" type="button" data-favorite-course="{{ course.id }}">♥ علاقه‌مندی</button>
+      </div>
+    </div>
+    <div class="detail-cover-card"><img src="{{ course.image_url }}" alt="{{ course.title }}"><div><span>دسترسی دائمی</span><span>پرداخت آزمایشی</span><span>پشتیبانی آموزشی</span></div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container two-column-layout">
+    <div class="content-stack">
+      <article class="content-card"><h2>درباره این دوره</h2><div class="rich-text">{{ course.description|linebreaks }}</div></article>
+      <article class="content-card">
+        <h2>سرفصل دوره</h2>
+        <div class="curriculum">
+          {% for section in course.sections.all %}
+          <details {% if forloop.first %}open{% endif %}><summary><span>فصل {{ section.order }}: {{ section.title }}</span><b>{{ section.lessons.count }} درس</b></summary><ul>{% for lesson in section.lessons.all %}<li><span>{% if lesson.is_preview %}▶{% else %}🔒{% endif %} {{ lesson.title }}</span><small>{{ lesson.duration_minutes }} دقیقه</small></li>{% empty %}<li>هنوز درسی ثبت نشده است.</li>{% endfor %}</ul></details>
+          {% empty %}<div class="empty-inline">سرفصل این دوره به‌زودی تکمیل می‌شود.</div>{% endfor %}
+        </div>
+      </article>
+      <article class="content-card" id="reviews">
+        <div class="section-heading"><div><h2>نظرات دانشجویان</h2><p>نظرها پس از تأیید مدیر نمایش داده می‌شوند.</p></div><div class="rating-big">{{ rating|floatformat:1 }} <span>★</span></div></div>
+        {% if request.user.is_authenticated %}
+        <form id="review-form" class="review-form" data-course-id="{{ course.id }}">
+          {% csrf_token %}
+          <label>امتیاز<select name="rating" required><option value="">انتخاب کنید</option><option value="5">۵ - عالی</option><option value="4">۴ - خوب</option><option value="3">۳ - متوسط</option><option value="2">۲ - ضعیف</option><option value="1">۱ - خیلی ضعیف</option></select></label>
+          <label>نظر شما<textarea name="comment" rows="4" required minlength="5" placeholder="تجربه خود را بنویسید..."></textarea></label>
+          <button class="btn btn-primary" type="submit">ثبت نظر</button>
+        </form>
+        {% else %}<div class="notice">برای ثبت نظر ابتدا <a href="{% url 'auth_page' %}?next={{ request.path }}">وارد حساب شوید</a>.</div>{% endif %}
+        <div class="review-list">
+          {% for review in approved_reviews %}<article class="review-card"><div><strong>{{ review.user.full_name }}</strong><span>{{ review.rating }} ★</span></div><p>{{ review.comment }}</p><small>{{ review.created_at|date:'Y/m/d' }}</small></article>{% empty %}<div class="empty-inline">هنوز نظری برای این دوره منتشر نشده است.</div>{% endfor %}
+        </div>
+      </article>
+    </div>
+    <aside class="side-card sticky-card"><h3>خلاصه دوره</h3><ul><li><span>مدرس</span><b>{{ course.instructor.full_name }}</b></li><li><span>سطح</span><b>{{ course.get_level_display }}</b></li><li><span>مدت</span><b>{{ course.duration_hours }} ساعت</b></li><li><span>دسته‌بندی</span><b>{{ course.category.name }}</b></li></ul><button class="btn btn-primary btn-block" type="button" data-add-course="{{ course.id }}">ثبت‌نام در دوره</button></aside>
+  </div>
+</section>
+
+{% if related_courses %}<section class="section soft-section"><div class="container"><div class="section-heading"><div><h2>دوره‌های مرتبط</h2></div></div><div class="course-grid">{% for course in related_courses %}{% include 'includes/course_card.html' with course=course favorite_ids='' %}{% endfor %}</div></div></section>{% endif %}
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/course.js' %}" defer></script>{% endblock %}

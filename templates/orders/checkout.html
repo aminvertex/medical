@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static catalog_tags %}
+{% block title %}تکمیل سفارش | MAHDAI{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><span class="eyebrow">مرحله دوم خرید</span><h1>ثبت سفارش و پرداخت آزمایشی</h1><p>مبلغ نهایی در بک‌اند و مستقیماً از قیمت‌های دیتابیس محاسبه می‌شود.</p></div></section>
+<section class="section"><div class="container checkout-layout">
+  <form id="checkout-form" class="content-card form-card">
+    {% csrf_token %}
+    <h2>اطلاعات خریدار</h2>
+    <div class="form-grid two"><label>نام<input name="first_name" minlength="2" maxlength="80" value="{{ request.user.first_name }}" required></label><label>نام خانوادگی<input name="last_name" minlength="2" maxlength="100" value="{{ request.user.last_name }}" required></label></div>
+    <div class="form-grid two"><label>ایمیل<input name="email" type="email" value="{{ request.user.email }}" required></label><label>شماره موبایل<input name="phone" minlength="10" maxlength="15" inputmode="numeric" value="{{ request.user.phone|default:'' }}" required></label></div>
+    <label>کد تخفیف (اختیاری)<input name="coupon_code" autocomplete="off" placeholder="مثلاً AI20"></label>
+    <div class="simulation-note"><strong>پرداخت آزمایشی</strong><p>هیچ اتصال بانکی وجود ندارد؛ اما سفارش، پرداخت، کد پیگیری و دسترسی دوره واقعاً در SQLite ذخیره می‌شوند.</p></div>
+    <button class="btn btn-primary btn-large btn-block" type="submit">ثبت سفارش و پرداخت آزمایشی</button>
+    <div id="checkout-error" class="form-error" hidden></div>
+  </form>
+  <aside class="side-card order-summary"><h2>خلاصه سفارش</h2>{% for item in cart_items %}<div class="summary-item"><span>{{ item.course.title }}</span><b>{{ item.course.price|toman }}</b></div>{% endfor %}<hr><div><span>جمع اولیه</span><b>{{ subtotal|toman }}</b></div><div><span>تخفیف</span><b>پس از اعتبارسنجی کد</b></div><div class="summary-total"><span>مبلغ اولیه</span><strong>{{ subtotal|toman }}</strong></div></aside>
+</div></section>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/checkout.js' %}" defer></script>{% endblock %}
