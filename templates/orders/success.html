@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load catalog_tags %}
-{% block title %}پرداخت موفق | MAHDAI{% endblock %}
+{% block title %}پرداخت موفق | نرسیمد آکادمی{% endblock %}
 {% block content %}
 <section class="success-section"><div class="container"><article class="success-card"><div class="success-icon">✓</div><span class="eyebrow">پرداخت ثبت شد</span><h1>خرید شما با موفقیت انجام شد</h1><p>برای هر ردیف سفارش یک دسترسی دوره ساخته شد و اکنون در صفحه «دوره‌های من» قابل مشاهده است.</p><div class="receipt"><div><span>شماره سفارش</span><b>{{ order.number }}</b></div><div><span>کد پیگیری</span><b>{{ order.payment.reference_code }}</b></div><div><span>مبلغ پرداخت</span><b>{{ order.total_amount|toman }}</b></div><div><span>زمان پرداخت</span><b>{{ order.paid_at|date:'Y/m/d - H:i' }}</b></div></div><div class="success-actions"><a class="btn btn-primary btn-large" href="{% url 'my_courses' %}">مشاهده دوره‌های من</a><a class="btn btn-outline btn-large" href="{% url 'my_orders' %}">مشاهده فاکتور</a></div></article></div></section>
 {% endblock %}

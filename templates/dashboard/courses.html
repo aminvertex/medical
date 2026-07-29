@@ -1,6 +1,6 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load static catalog_tags %}
-{% block title %}مدیریت دوره‌ها | MAHDAI{% endblock %}
+{% block title %}مدیریت دوره‌ها | نرسیمد آکادمی{% endblock %}
 {% block dashboard_content %}
 <div class="dashboard-heading"><div><span class="eyebrow">کاتالوگ</span><h1>مدیریت دوره‌ها</h1><p>برای ساخت و ویرایش کامل همراه تصویر از Django Admin استفاده کنید.</p></div><a class="btn btn-primary" href="/django-admin/catalog/course/add/">دوره جدید</a></div>
 <div class="content-card"><div class="table-wrap"><table class="admin-table"><thead><tr><th>دوره</th><th>دسته</th><th>مدرس</th><th>قیمت</th><th>دانشجو</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>{% for course in courses %}<tr><td><strong>{{ course.title }}</strong><small>{{ course.code }}</small></td><td>{{ course.category.name }}</td><td>{{ course.instructor.full_name }}</td><td>{{ course.price|toman }}</td><td>{{ course.enrollments_count }}</td><td><span class="status {% if course.is_active %}status-paid{% else %}status-cancelled{% endif %}" data-course-status-label="{{ course.id }}">{% if course.is_active %}فعال{% else %}غیرفعال{% endif %}</span></td><td><a class="btn btn-outline btn-small" href="/django-admin/catalog/course/{{ course.id }}/change/">ویرایش</a><button class="btn btn-ghost btn-small" data-toggle-course="{{ course.id }}" data-active="{{ course.is_active|yesno:'true,false' }}">{% if course.is_active %}توقف فروش{% else %}فعال‌سازی{% endif %}</button></td></tr>{% endfor %}</tbody></table></div></div>
