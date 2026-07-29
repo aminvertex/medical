@@ -17,10 +17,12 @@ class RoleSessionAuth(SessionAuth):
 
     def __init__(self, *roles: str):
         self.roles = set(roles)
-        self.csrf = True  # Add csrf attribute for Django Ninja compatibility
+        # Django Ninja's SessionAuth expects csrf attribute
+        if not hasattr(self, 'csrf'):
+            self.csrf = getattr(SessionAuth(), 'csrf', False)
 
-    def authenticate(self, request):
-        user = super().authenticate(request)
+    def authenticate(self, request, key):
+        user = super().authenticate(request, key)
         if not user:
             return None
         if user.is_superuser or user.role in self.roles:
