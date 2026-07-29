@@ -17,8 +17,6 @@ class UserManager(BaseUserManager):
         return user
 
     def create_user(self, email, password=None, **extra_fields):
-        if extra_fields.get("is_superuser") is True:
-            raise ValueError("برای ساخت مدیر ارشد از create_superuser استفاده کنید.")
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         extra_fields.setdefault("role", User.Role.STUDENT)
@@ -33,8 +31,6 @@ class UserManager(BaseUserManager):
             raise ValueError("مدیر ارشد باید is_staff=True داشته باشد.")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("مدیر ارشد باید is_superuser=True داشته باشد.")
-        if extra_fields.get("role") != User.Role.ADMIN:
-            raise ValueError("مدیر ارشد باید نقش ADMIN داشته باشد.")
         return self._create_user(email, password, **extra_fields)
 
 

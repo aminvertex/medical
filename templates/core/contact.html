@@ -6,8 +6,8 @@
 <section class="section"><div class="container contact-grid">
   <form id="contact-form" class="content-card form-card">
     {% csrf_token %}<h2>ارسال پیام</h2>
-    <div class="form-grid two"><label>نام و نام خانوادگی<input name="name" minlength="2" maxlength="160" value="{% if request.user.is_authenticated %}{{ request.user.full_name }}{% endif %}" required></label><label>ایمیل<input name="email" type="email" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required></label></div>
-    <label>موضوع<input name="subject" required maxlength="200"></label><label>متن پیام<textarea name="message" rows="7" required minlength="10" maxlength="5000"></textarea></label>
+    <div class="form-grid two"><label>نام و نام خانوادگی<input name="name" value="{% if request.user.is_authenticated %}{{ request.user.full_name }}{% endif %}" required></label><label>ایمیل<input name="email" type="email" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required></label></div>
+    <label>موضوع<input name="subject" required maxlength="200"></label><label>متن پیام<textarea name="message" rows="7" required minlength="10"></textarea></label>
     <button class="btn btn-primary" type="submit">ثبت پیام</button><div id="contact-error" class="form-error" hidden></div>
   </form>
   <aside class="contact-info"><article><span>✉</span><div><h3>ایمیل</h3><p>info@mahdai.ir</p></div></article><article><span>☎</span><div><h3>تلفن</h3><p>۰۲۱-۱۲۳۴۵۶۷۸</p></div></article><article><span>⌂</span><div><h3>ساعت پاسخ‌گویی</h3><p>شنبه تا چهارشنبه، ۹ تا ۱۷</p></div></article><div class="content-card"><h3>وضعیت پیام در پنل مدیر</h3><p>هر پیام با وضعیت «جدید» ثبت می‌شود و مدیر می‌تواند آن را به «خوانده‌شده» یا «پاسخ‌داده‌شده» تغییر دهد.</p></div></aside>

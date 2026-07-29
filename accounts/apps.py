@@ -5,7 +5,3 @@ class AccountsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "accounts"
     verbose_name = "کاربران و احراز هویت"
-
-    def ready(self):
-        # Register project-specific ``manage.py check`` validations.
-        from . import checks  # noqa: F401

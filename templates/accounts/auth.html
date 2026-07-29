@@ -22,8 +22,8 @@
         {% csrf_token %}
         <div class="form-grid two"><label>نام<input name="first_name" required maxlength="80"></label><label>نام خانوادگی<input name="last_name" required maxlength="100"></label></div>
         <label>ایمیل<input name="email" type="email" autocomplete="email" required></label>
-        <label>شماره موبایل<input name="phone" type="tel" inputmode="numeric" required minlength="10" maxlength="15" placeholder="09123456789"></label>
-        <div class="form-grid two"><label>رمز عبور<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>تکرار رمز<input name="password_confirm" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label></div>
+        <label>شماره موبایل<input name="phone" type="tel" inputmode="numeric" required placeholder="09123456789"></label>
+        <div class="form-grid two"><label>رمز عبور<input name="password" type="password" autocomplete="new-password" required minlength="8"></label><label>تکرار رمز<input name="password_confirm" type="password" autocomplete="new-password" required minlength="8"></label></div>
         <small class="form-hint">رمز مناسب حداقل ۸ نویسه دارد و صرفاً عددی یا بسیار ساده نیست.</small>
         <button class="btn btn-primary btn-block" type="submit">ساخت حساب دانشجویی</button>
       </form>

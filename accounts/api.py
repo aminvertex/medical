@@ -51,12 +51,8 @@ def register_user(request, payload: RegisterIn):
     phone = payload.phone.strip()
     first_name = payload.first_name.strip()
     last_name = payload.last_name.strip()
-    if not 2 <= len(first_name) <= 80 or not 2 <= len(last_name) <= 100:
-        return Status(400, {"detail": "طول نام یا نام خانوادگی معتبر نیست."})
-    if len(email) > 254:
-        return Status(400, {"detail": "طول ایمیل معتبر نیست."})
-    if not 8 <= len(payload.password) <= 128:
-        return Status(400, {"detail": "رمز عبور باید بین ۸ تا ۱۲۸ نویسه باشد."})
+    if len(first_name) < 2 or len(last_name) < 2:
+        return Status(400, {"detail": "نام و نام خانوادگی باید حداقل دو نویسه باشند."})
     try:
         validate_email(email)
     except ValidationError:
@@ -99,8 +95,6 @@ def register_user(request, payload: RegisterIn):
 @decorate_view(csrf_protect)
 def login_user(request, payload: LoginIn):
     email = payload.email.strip().lower()
-    if len(email) > 254 or len(payload.password) > 128:
-        return Status(401, {"detail": "ایمیل یا رمز عبور نادرست است."})
     existing_user = User.objects.filter(email=email).first()
     if existing_user and not existing_user.is_active and existing_user.check_password(payload.password):
         return Status(403, {"detail": "این حساب غیرفعال شده است."})

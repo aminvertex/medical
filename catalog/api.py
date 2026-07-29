@@ -108,14 +108,13 @@ def create_review(request, course_id: int, payload: ReviewIn):
     course = get_object_or_404(Course, id=course_id, is_active=True)
     if not 1 <= payload.rating <= 5:
         return Status(400, {"detail": "امتیاز باید بین ۱ تا ۵ باشد."})
-    comment = payload.comment.strip()
-    if not 5 <= len(comment) <= 3000:
-        return Status(400, {"detail": "متن نظر باید بین ۵ تا ۳۰۰۰ نویسه باشد."})
+    if len(payload.comment.strip()) < 5:
+        return Status(400, {"detail": "متن نظر باید حداقل ۵ نویسه باشد."})
     if not Enrollment.objects.filter(user=request.auth, course=course, is_active=True).exists():
         return Status(403, {"detail": "فقط دانشجوی خریدار دوره می‌تواند نظر ثبت کند."})
     review, created = Review.objects.update_or_create(
         user=request.auth,
         course=course,
-        defaults={"rating": payload.rating, "comment": comment, "status": Review.Status.PENDING},
+        defaults={"rating": payload.rating, "comment": payload.comment.strip(), "status": Review.Status.PENDING},
     )
     return Status(201 if created else 200, {"message": "نظر شما برای بررسی مدیر ثبت شد.", "review_id": review.id})

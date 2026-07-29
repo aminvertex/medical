@@ -1,4 +1,5 @@
-from django.db.models import Avg, Count, Q
+from django.contrib.auth import get_user_model
+from django.db.models import Avg, Count, Q, Sum
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 

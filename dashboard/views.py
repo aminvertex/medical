@@ -1,12 +1,11 @@
-from django.db.models import BigIntegerField, Count, OuterRef, Q, Subquery, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Count, Q, Sum
 from django.shortcuts import render
 
 from accounts.models import User
 from accounts.security import role_required
 from catalog.models import Course, Review
 from core.models import ContactMessage
-from orders.models import Enrollment, Order, OrderItem
+from orders.models import Enrollment, Order
 
 
 @role_required(User.Role.ADMIN)
@@ -53,26 +52,9 @@ def dashboard_messages(request):
 
 @role_required(User.Role.INSTRUCTOR, User.Role.ADMIN)
 def instructor_dashboard(request):
-    paid_revenue = (
-        OrderItem.objects.filter(
-            course_id=OuterRef("pk"),
-            order__status=Order.Status.PAID,
-        )
-        .values("course_id")
-        .annotate(total=Sum("unit_price"))
-        .values("total")[:1]
-    )
     courses = Course.objects.filter(instructor=request.user).annotate(
-        students_count=Count(
-            "enrollments",
-            filter=Q(enrollments__is_active=True),
-            distinct=True,
-        ),
-        revenue=Coalesce(
-            Subquery(paid_revenue, output_field=BigIntegerField()),
-            Value(0, output_field=BigIntegerField()),
-            output_field=BigIntegerField(),
-        ),
+        students_count=Count("enrollments", filter=Q(enrollments__is_active=True), distinct=True),
+        revenue=Sum("order_items__unit_price", filter=Q(order_items__order__status=Order.Status.PAID)),
     )
     course_ids = list(courses.values_list("id", flat=True))
     context = {

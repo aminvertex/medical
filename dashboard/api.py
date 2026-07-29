@@ -1,15 +1,14 @@
-from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Count, Sum
 from django.shortcuts import get_object_or_404
 from ninja import Router, Schema, Status
 from ninja.responses import codes_4xx
 
 from accounts.models import InstructorProfile, User
 from accounts.security import admin_auth
-from catalog.models import Course, Review
 from config.schemas import ErrorOut
+from catalog.models import Course, Review
 from core.models import ContactMessage
-from orders.models import Order
+from orders.models import Enrollment, Order
 
 router = Router(tags=["Admin Dashboard"])
 
@@ -45,14 +44,9 @@ def admin_stats(request):
 @router.get("/users", auth=admin_auth)
 def list_users(request, q: str = ""):
     users = User.objects.all()
-    q = q.strip()
     if q:
-        users = users.filter(
-            Q(email__icontains=q)
-            | Q(first_name__icontains=q)
-            | Q(last_name__icontains=q)
-            | Q(phone__icontains=q)
-        )
+        from django.db.models import Q
+        users = users.filter(Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(phone__icontains=q))
     return [
         {
             "id": user.id,
@@ -62,69 +56,36 @@ def list_users(request, q: str = ""):
             "role": user.role,
             "role_label": user.get_role_display(),
             "is_active": user.is_active,
-            "is_superuser": user.is_superuser,
             "date_joined": user.date_joined.isoformat(),
         }
         for user in users[:200]
     ]
 
 
-@router.patch(
-    "/users/{user_id}",
-    auth=admin_auth,
-    response={200: dict, codes_4xx: ErrorOut},
-)
-@transaction.atomic
+@router.patch("/users/{user_id}", auth=admin_auth, response={200: dict, codes_4xx: ErrorOut})
 def update_user(request, user_id: int, payload: UserUpdateIn):
-    user = get_object_or_404(User.objects.select_for_update(), id=user_id)
-    if payload.role is None and payload.is_active is None:
-        return Status(400, {"detail": "حداقل یک مقدار برای تغییر ارسال کنید."})
-
-    is_self = user.id == request.auth.id
-    if user.is_superuser:
-        if payload.role not in (None, User.Role.ADMIN) or payload.is_active is False:
-            return Status(400, {"detail": "مدیر ارشد از پنل سفارشی تغییر یا غیرفعال نمی‌شود."})
-    if is_self and payload.is_active is False:
+    user = get_object_or_404(User, id=user_id)
+    if user.id == request.auth.id and payload.is_active is False:
         return Status(400, {"detail": "مدیر نمی‌تواند حساب خودش را غیرفعال کند."})
-    if is_self and payload.role is not None and payload.role != User.Role.ADMIN:
-        return Status(400, {"detail": "مدیر نمی‌تواند نقش خودش را کاهش دهد."})
-    if payload.is_active is False and user.taught_courses.filter(is_active=True).exists():
-        return Status(
-            409,
-            {"detail": "ابتدا دوره‌های فعال این مدرس را متوقف یا به مدرس دیگری منتقل کنید."},
-        )
-
     if payload.role is not None:
         allowed = {choice for choice, _ in User.Role.choices}
         if payload.role not in allowed:
             return Status(400, {"detail": "نقش نامعتبر است."})
+        if user.is_superuser and payload.role != User.Role.ADMIN:
+            return Status(400, {"detail": "نقش مدیر ارشد از این مسیر تغییر نمی‌کند."})
         if payload.role == User.Role.STUDENT and user.taught_courses.exists():
-            return Status(
-                409,
-                {"detail": "ابتدا دوره‌های این مدرس را به مدرس دیگری منتقل کنید."},
-            )
+            return Status(409, {"detail": "ابتدا دوره‌های این مدرس را به مدرس دیگری منتقل کنید."})
         user.role = payload.role
+        user.is_staff = payload.role == User.Role.ADMIN or user.is_superuser
         if payload.role == User.Role.INSTRUCTOR:
             InstructorProfile.objects.get_or_create(
                 user=user,
-                defaults={
-                    "title": "مدرس آکادمی",
-                    "bio": "پروفایل مدرس را تکمیل کنید.",
-                    "expertise": "هوش مصنوعی",
-                },
+                defaults={"title": "مدرس آکادمی", "bio": "پروفایل مدرس را تکمیل کنید.", "expertise": "هوش مصنوعی"},
             )
     if payload.is_active is not None:
         user.is_active = payload.is_active
     user.save()
-    return {
-        "message": "اطلاعات کاربر به‌روزرسانی شد.",
-        "user": {
-            "id": user.id,
-            "role": user.role,
-            "role_label": user.get_role_display(),
-            "is_active": user.is_active,
-        },
-    }
+    return {"message": "اطلاعات کاربر به‌روزرسانی شد."}
 
 
 @router.patch("/courses/{course_id}/status", auth=admin_auth)
@@ -135,11 +96,7 @@ def update_course_status(request, course_id: int, payload: CourseStatusIn):
     return {"message": "وضعیت دوره تغییر کرد.", "is_active": course.is_active}
 
 
-@router.patch(
-    "/messages/{message_id}",
-    auth=admin_auth,
-    response={200: dict, codes_4xx: ErrorOut},
-)
+@router.patch("/messages/{message_id}", auth=admin_auth, response={200: dict, codes_4xx: ErrorOut})
 def update_message_status(request, message_id: int, payload: MessageStatusIn):
     message = get_object_or_404(ContactMessage, id=message_id)
     allowed = {choice for choice, _ in ContactMessage.Status.choices}

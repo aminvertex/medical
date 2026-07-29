@@ -108,7 +108,7 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.number:
-            self.number = f"MAH-{timezone.localdate():%y%m%d}-{secrets.token_hex(5).upper()}"
+            self.number = f"MAH-{timezone.localdate():%y%m%d}-{secrets.token_hex(3).upper()}"
         super().save(*args, **kwargs)
 
 

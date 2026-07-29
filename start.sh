@@ -6,6 +6,4 @@ if [ ! -x .venv/bin/python ]; then
   exit 1
 fi
 
-HOST="${HOST:-127.0.0.1}"
-PORT="${PORT:-8000}"
-exec .venv/bin/python manage.py runserver "${HOST}:${PORT}"
+exec .venv/bin/python manage.py runserver 127.0.0.1:8000
