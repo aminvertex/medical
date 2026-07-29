@@ -31,17 +31,11 @@
 ./start.sh
 ```
 
-برای اجرای مستقیم روی پورت ۸۰۰۱:
-
-```bash
-PORT=8001 ./start.sh
-```
-
 در Windows:
 
 ```bat
 setup_windows.bat
-start_windows.bat 8001
+start_windows.bat
 ```
 
 روش دستی:
@@ -170,29 +164,19 @@ python scripts/preflight.py
 ```bash
 python manage.py check
 python manage.py makemigrations --check --dry-run
-python manage.py test accounts catalog orders core dashboard --verbosity 2
+python manage.py test
 ```
 
-یا همه کنترل‌ها را یک‌جا اجرا کنید:
+تست‌ها جریان‌های مهم زیر را پوشش می‌دهند:
 
-```bash
-PYTHON_BIN=.venv/bin/python ./scripts/qa_all.sh
-```
-
-مجموعهٔ QA شامل **۷۱ تست Runtime** و کنترل‌های مستقل زیر است:
-
-- ساختار داخلی Session Auth و مقداردهی CSRF
-- ثبت‌نام، ورود، خروج، کاربر غیرفعال، Hash رمز و ورودی‌های نامعتبر
-- ماتریس دسترسی ناشناس، دانشجو، مدرس و مدیر برای صفحه‌ها و APIها
-- بررسی واقعی CSRF با `Client(enforce_csrf_checks=True)`
-- رندر تمام صفحات عمومی، حساب، مدرس، مدیر، Swagger و OpenAPI
-- جست‌وجو، دسته‌بندی، مرتب‌سازی، علاقه‌مندی و نظر
-- سبد، حذف، Checkout، Snapshot قیمت، پرداخت idempotent و ترمیم Payment ناقص
-- جلوگیری از مشاهده یا پرداخت سفارش کاربر دیگر و خرید هم‌زمان تکراری
-- کدهای تخفیف منقضی، آینده، حداقل مبلغ، سقف تخفیف و محدودیت مصرف
-- پیام تماس، خبرنامه، تغییر نقش، محافظت Superuser و تغییر وضعیت‌ها
-- یکپارچگی SQLite، Foreign Keyها و سازگاری Order/Payment/Enrollment
-- تطبیق خودکار تمام آدرس‌های API فرانت با Routerهای بک‌اند
+- ثبت‌نام عمومی و اجبار نقش دانشجو
+- جلوگیری از ایمیل تکراری
+- تفاوت `401` و `403`
+- جلوگیری از دوره تکراری در سبد
+- Snapshot قیمت سفارش
+- پرداخت آزمایشی و ایجاد Enrollment
+- جلوگیری از خرید دوباره
+- ممنوع بودن ثبت نظر برای غیرخریدار
 
 ## ساخت مدیر جدید
 

@@ -25,10 +25,9 @@ def checkout_page(request):
 
 @login_required
 def payment_success(request, order_number):
-    orders = Order.objects.select_related("payment").prefetch_related("items")
-    if not request.user.is_admin_role:
-        orders = orders.filter(user=request.user)
-    order = get_object_or_404(orders, number=order_number)
+    order = get_object_or_404(Order.objects.select_related("payment").prefetch_related("items"), number=order_number)
+    if order.user_id != request.user.id and not request.user.is_admin_role:
+        return render(request, "errors/403.html", status=403)
     if order.status != Order.Status.PAID:
         return redirect("my_orders")
     return render(request, "orders/success.html", {"order": order})

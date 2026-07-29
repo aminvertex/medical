@@ -1,6 +1,6 @@
 from functools import wraps
 
-from django.contrib.auth.views import redirect_to_login
+from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from ninja.errors import HttpError
 from ninja.security import SessionAuth
@@ -11,20 +11,15 @@ from .models import User
 class RoleSessionAuth(SessionAuth):
     """Session authentication plus an explicit role check.
 
-    ``SessionAuth`` is implemented as cookie authentication. Its constructor
-    initializes CSRF and OpenAPI metadata, so subclasses must call ``super``.
-    Django Ninja also passes the session-cookie value to ``authenticate``.
-
-    Anonymous requests receive 401. Authenticated users with a wrong role
-    receive 403, which keeps authentication and authorization distinguishable.
+    Anonymous requests receive 401 from Django Ninja. Authenticated users with a
+    wrong role receive 403, which is the distinction required for the project.
     """
 
-    def __init__(self, *roles: str, csrf: bool = True):
-        super().__init__(csrf=csrf)
-        self.roles = frozenset(roles)
+    def __init__(self, *roles: str):
+        self.roles = set(roles)
 
-    def authenticate(self, request, key=None):
-        user = super().authenticate(request, key)
+    def authenticate(self, request):
+        user = super().authenticate(request)
         if not user:
             return None
         if user.is_superuser or user.role in self.roles:
@@ -38,19 +33,14 @@ admin_auth = RoleSessionAuth(User.Role.ADMIN)
 
 
 def role_required(*roles):
-    """Protect template views with the same role rules used by the API."""
-
-    allowed_roles = frozenset(roles)
-
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
+                from django.contrib.auth.views import redirect_to_login
                 return redirect_to_login(request.get_full_path())
-            if request.user.is_superuser or request.user.role in allowed_roles:
+            if request.user.is_superuser or request.user.role in roles:
                 return view_func(request, *args, **kwargs)
             return render(request, "errors/403.html", status=403)
-
         return wrapper
-
     return decorator

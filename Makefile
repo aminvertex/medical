@@ -1,6 +1,4 @@
-.PHONY: setup migrate seed run test check preflight qa
-
-PORT ?= 8000
+.PHONY: setup migrate seed run test check
 
 setup:
 	python3 -m venv .venv
@@ -15,17 +13,11 @@ seed:
 	.venv/bin/python manage.py seed_demo_data
 
 run:
-	.venv/bin/python manage.py runserver 127.0.0.1:$(PORT)
+	.venv/bin/python manage.py runserver
 
 test:
-	.venv/bin/python manage.py test accounts catalog orders core dashboard --verbosity 2
+	.venv/bin/python manage.py test
 
 check:
 	.venv/bin/python manage.py check
 	.venv/bin/python manage.py makemigrations --check --dry-run
-
-preflight:
-	.venv/bin/python scripts/preflight.py
-
-qa:
-	PYTHON_BIN=.venv/bin/python ./scripts/qa_all.sh

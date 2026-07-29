@@ -1,26 +1,26 @@
 {% extends 'base.html' %}
 {% load static catalog_tags %}
-{% block title %}MAHDAI | آموزش تخصصی هوش مصنوعی{% endblock %}
+{% block title %}نرسیمد آکادمی | آموزش تخصصی پزشکی{% endblock %}
 {% block content %}
 <section class="hero-section">
   <div class="container hero-grid">
     <div class="hero-copy">
-      <span class="eyebrow">آکادمی پروژه‌محور هوش مصنوعی</span>
-      <h1>از یادگیری مفاهیم تا ساخت پروژه‌های واقعی AI</h1>
-      <p>دوره‌های تخصصی یادگیری ماشین، یادگیری عمیق، ChatGPT و تحلیل داده را با مدرس‌های حرفه‌ای و مسیر آموزشی ساختاریافته یاد بگیرید.</p>
+      <span class="eyebrow">پلتفرم جامع آموزش پزشکی</span>
+      <h1>ارتقای مهارت‌های بالینی با برترین اساتید کشور</h1>
+      <p>دوره‌های تخصصی قلب و عروق، مغز و اعصاب، داخلی، جراحی و سایر رشته‌های پزشکی را با مدرس‌های حرفه‌ای و مسیر آموزشی ساختاریافته یاد بگیرید.</p>
       <div class="hero-actions">
         <a class="btn btn-primary btn-large" href="{% url 'shop' %}">مشاهده دوره‌ها</a>
-        <a class="btn btn-outline btn-large" href="{% url 'about' %}">آشنایی با آکادمی</a>
+        <a class="btn btn-outline btn-large" href="{% url 'about' %}">آشنایی با نرسیمد</a>
       </div>
-      <div class="trust-row"><span>✓ پرداخت آزمایشی امن</span><span>✓ دسترسی دائمی</span><span>✓ پشتیبانی دوره</span></div>
+      <div class="trust-row"><span>✓ پرداخت امن</span><span>✓ دسترسی دائمی</span><span>✓ پشتیبانی تخصصی</span></div>
     </div>
     <div class="hero-visual">
       <div class="hero-orb"></div>
-      <div class="code-card">
+      <div class="code-card medical-card">
         <span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span>
-        <pre><code>model.fit(X_train, y_train)
-accuracy = model.score(X_test, y_test)
-print(f"AI accuracy: {accuracy:.2%}")</code></pre>
+        <pre><code>ECG: Normal Sinus Rhythm
+HR: 72 bpm | PR: 160ms | QRS: 88ms
+Interpretation: No acute abnormalities</code></pre>
       </div>
       <div class="floating-card floating-a"><b>+{{ stats.enrollments }}</b><span>ثبت‌نام دوره</span></div>
       <div class="floating-card floating-b"><b>{{ stats.average_rating|floatformat:1 }} / ۵</b><span>میانگین رضایت</span></div>
@@ -55,12 +55,12 @@ print(f"AI accuracy: {accuracy:.2%}")</code></pre>
 
 <section class="section soft-section">
   <div class="container">
-    <div class="section-heading centered"><div><span class="eyebrow">چرا MAHDAI؟</span><h2>یک تجربه آموزشی کامل</h2></div></div>
+    <div class="section-heading centered"><div><span class="eyebrow">چرا نرسیمد آکادمی؟</span><h2>یک تجربه آموزشی کامل</h2></div></div>
     <div class="feature-grid">
-      <article class="feature-card"><span>🧪</span><h3>کاملاً پروژه‌محور</h3><p>هر دوره با تمرین و پروژه‌ای پایان می‌یابد که قابل استفاده در رزومه است.</p></article>
-      <article class="feature-card"><span>🧭</span><h3>مسیر یادگیری روشن</h3><p>فصل‌ها و درس‌ها به ترتیب طراحی شده‌اند تا بدون سردرگمی پیش بروید.</p></article>
-      <article class="feature-card"><span>💬</span><h3>بازخورد واقعی</h3><p>نظرات فقط توسط خریداران دوره ثبت می‌شود و مدیر آن‌ها را بررسی می‌کند.</p></article>
-      <article class="feature-card"><span>🏅</span><h3>دسترسی قابل پیگیری</h3><p>پس از پرداخت موفق، رکورد Enrollment برای دانشجو و دوره ساخته می‌شود.</p></article>
+      <article class="feature-card"><span>🩺</span><h3>محتوای بالینی معتبر</h3><p>تمام دوره‌ها توسط اساتید هیئت علمی و متخصصان با تجربه بالینی بالا طراحی و ارائه می‌شوند.</p></article>
+      <article class="feature-card"><span>📚</span><h3>مسیر یادگیری ساختاریافته</h3><p>فصل‌ها و درس‌ها بر اساس سرفصل‌های وزارت بهداشت و رفرنس‌های معتبر جهانی تنظیم شده‌اند.</p></article>
+      <article class="feature-card"><span>💬</span><h3>بازخورد واقعی دانشجویان</h3><p>نظرات فقط توسط خریداران دوره ثبت می‌شود و مدیران آن‌ها را بررسی می‌کنند.</p></article>
+      <article class="feature-card"><span>🏆</span><h3>گواهی پایان دوره</h3><p>پس از اتمام موفقیت‌آمیز هر دوره، گواهی معتبر دریافت خواهید کرد.</p></article>
     </div>
   </div>
 </section>
@@ -85,7 +85,7 @@ print(f"AI accuracy: {accuracy:.2%}")</code></pre>
 
 <section class="cta-band">
   <div class="container cta-inner">
-    <div><span class="eyebrow light-eyebrow">آماده شروع هستید؟</span><h2>اولین پروژه هوش مصنوعی خود را بسازید.</h2></div>
+    <div><span class="eyebrow light-eyebrow">آماده ارتقای مهارت‌های بالینی هستید؟</span><h2>اولین دوره تخصصی پزشکی خود را شروع کنید.</h2></div>
     <a class="btn btn-light btn-large" href="{% url 'shop' %}">شروع یادگیری</a>
   </div>
 </section>

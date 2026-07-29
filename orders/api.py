@@ -73,15 +73,10 @@ def delete_cart_item(request, course_id: int):
 
 @router.post("/checkout", auth=student_auth, response={201: dict, codes_4xx: ErrorOut})
 def checkout(request, payload: CheckoutIn):
-    first_name = payload.first_name.strip()
-    last_name = payload.last_name.strip()
-    email = payload.email.strip().lower()
-    if not 2 <= len(first_name) <= 80 or not 2 <= len(last_name) <= 100:
+    if len(payload.first_name.strip()) < 2 or len(payload.last_name.strip()) < 2:
         return Status(400, {"detail": "نام و نام خانوادگی معتبر نیست."})
-    if len(email) > 254:
-        return Status(400, {"detail": "ایمیل معتبر نیست."})
     try:
-        validate_email(email)
+        validate_email(payload.email.strip())
     except ValidationError:
         return Status(400, {"detail": "ایمیل معتبر نیست."})
     phone = payload.phone.strip()
@@ -90,9 +85,9 @@ def checkout(request, payload: CheckoutIn):
     try:
         order = create_order(
             request.auth,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+            email=payload.email,
             phone=payload.phone,
             coupon_code=payload.coupon_code,
         )

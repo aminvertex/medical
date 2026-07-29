@@ -7,8 +7,8 @@
   <form id="checkout-form" class="content-card form-card">
     {% csrf_token %}
     <h2>اطلاعات خریدار</h2>
-    <div class="form-grid two"><label>نام<input name="first_name" minlength="2" maxlength="80" value="{{ request.user.first_name }}" required></label><label>نام خانوادگی<input name="last_name" minlength="2" maxlength="100" value="{{ request.user.last_name }}" required></label></div>
-    <div class="form-grid two"><label>ایمیل<input name="email" type="email" value="{{ request.user.email }}" required></label><label>شماره موبایل<input name="phone" minlength="10" maxlength="15" inputmode="numeric" value="{{ request.user.phone|default:'' }}" required></label></div>
+    <div class="form-grid two"><label>نام<input name="first_name" value="{{ request.user.first_name }}" required></label><label>نام خانوادگی<input name="last_name" value="{{ request.user.last_name }}" required></label></div>
+    <div class="form-grid two"><label>ایمیل<input name="email" type="email" value="{{ request.user.email }}" required></label><label>شماره موبایل<input name="phone" value="{{ request.user.phone|default:'' }}" required></label></div>
     <label>کد تخفیف (اختیاری)<input name="coupon_code" autocomplete="off" placeholder="مثلاً AI20"></label>
     <div class="simulation-note"><strong>پرداخت آزمایشی</strong><p>هیچ اتصال بانکی وجود ندارد؛ اما سفارش، پرداخت، کد پیگیری و دسترسی دوره واقعاً در SQLite ذخیره می‌شوند.</p></div>
     <button class="btn btn-primary btn-large btn-block" type="submit">ثبت سفارش و پرداخت آزمایشی</button>

@@ -26,28 +26,18 @@ class NewsletterIn(Schema):
 @router.post("/contact", auth=None, response={201: dict, codes_4xx: ErrorOut})
 @decorate_view(csrf_protect)
 def create_contact_message(request, payload: ContactIn):
-    name = payload.name.strip()
-    email = payload.email.strip().lower()
-    subject = payload.subject.strip()
-    body = payload.message.strip()
-    if not 2 <= len(name) <= 160:
-        return Status(400, {"detail": "نام باید بین ۲ تا ۱۶۰ نویسه باشد."})
-    if not 3 <= len(subject) <= 200:
-        return Status(400, {"detail": "موضوع باید بین ۳ تا ۲۰۰ نویسه باشد."})
-    if not 10 <= len(body) <= 5000:
-        return Status(400, {"detail": "متن پیام باید بین ۱۰ تا ۵۰۰۰ نویسه باشد."})
-    if len(email) > 254:
-        return Status(400, {"detail": "ایمیل معتبر نیست."})
     try:
-        validate_email(email)
+        validate_email(payload.email.strip())
     except ValidationError:
         return Status(400, {"detail": "ایمیل معتبر نیست."})
+    if len(payload.message.strip()) < 10:
+        return Status(400, {"detail": "متن پیام باید حداقل ۱۰ نویسه باشد."})
     message = ContactMessage.objects.create(
         user=request.user if request.user.is_authenticated else None,
-        name=name,
-        email=email,
-        subject=subject,
-        message=body,
+        name=payload.name.strip(),
+        email=payload.email.strip().lower(),
+        subject=payload.subject.strip(),
+        message=payload.message.strip(),
     )
     return Status(201, {"message": "پیام شما با موفقیت ثبت شد.", "id": message.id})
 
@@ -56,8 +46,6 @@ def create_contact_message(request, payload: ContactIn):
 @decorate_view(csrf_protect)
 def subscribe_newsletter(request, payload: NewsletterIn):
     email = payload.email.strip().lower()
-    if len(email) > 254:
-        return Status(400, {"detail": "ایمیل معتبر نیست."})
     try:
         validate_email(email)
     except ValidationError:
